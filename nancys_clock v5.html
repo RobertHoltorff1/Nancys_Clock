@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Nancy's Clock</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+:root {
+  --bg:     #080810;
+  --bg2:    #10101c;
+  --bg3:    #181828;
+  --text:   #f2f0ea;
+  --text2:  #8a8880;
+  --accent: #5dcaa5;
+  --accentd:#0f6e56;
+  --warn:   #ef9f27;
+  --red:    #e24b4a;
+  --border: rgba(255,255,255,0.07);
+}
+
+html, body {
+  width:100%; height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,'SF Pro Display',sans-serif;
+  overflow:hidden;
+  touch-action:manipulation;
+  user-select:none;
+  -webkit-user-select:none;
+}
+
+/* ══ MAIN LAYOUT ══════════════════════════════════════════════ */
+#app {
+  width:100%; height:100%;
+  display:grid;
+  grid-template-rows: auto 1fr auto;
+  padding: 36px 28px 28px;
+  gap: 20px;
+}
+
+/* ── TOP: CLOCK ── */
+#clock-block {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:0;
+}
+
+#time-display {
+  font-size: 116px;
+  font-weight: 700;
+  letter-spacing: -3px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: #ffffff;
+}
+
+#ampm-display {
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 5px;
+  margin-top: -4px;
+}
+
+#date-display {
+  font-size: 34px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-top: 6px;
+  letter-spacing: 0.5px;
+}
+
+/* ── MIDDLE: CALENDAR ── */
+#calendar-block {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  overflow: hidden;
+}
+
+#cal-header {
+  font-size: 30px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: #ffffff;
+}
+
+#cal-events {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cal-event {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.cal-event-time {
+  font-size: 30px;
+  font-weight: 300;
+  color: var(--accent);
+  min-width: 110px;
+  line-height: 1.1;
+  flex-shrink: 0;
+}
+
+.cal-event-text {
+  font-size: 34px;
+  font-weight: 300;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+#cal-empty {
+  font-size: 32px;
+  font-weight: 300;
+  color: var(--text2);
+  line-height: 1.4;
+}
+
+/* ── BOTTOM: NEXT REMINDER ── */
+#next-bar {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
+
+#next-label { font-size:18px; color:var(--text2); }
+#next-time  { font-size:18px; color:var(--accent); font-weight:500; }
+
+/* ══ ALARM OVERLAY ════════════════════════════════════════════ */
+#alarm-overlay {
+  display:none;
+  position:fixed; inset:0;
+  background:rgba(6,6,14,0.96);
+  z-index:100;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:28px;
+  padding:40px 36px;
+  text-align:center;
+}
+#alarm-overlay.active { display:flex; }
+
+#alarm-emoji {
+  font-size:96px;
+  animation:bob 1.4s ease-in-out infinite;
+}
+@keyframes bob {
+  0%,100%{transform:translateY(0);}
+  50%{transform:translateY(-12px);}
+}
+
+#alarm-name {
+  font-size:64px;
+  font-weight:500;
+  color:var(--accent);
+  line-height:1;
+}
+
+#alarm-message {
+  font-size:44px;
+  font-weight:300;
+  color:var(--text);
+  line-height:1.3;
+  max-width:680px;
+}
+
+#alarm-speaker {
+  font-size:22px;
+  color:var(--text2);
+  font-style:italic;
+  min-height:30px;
+}
+
+#stop-btn {
+  background:var(--accentd);
+  border:none;
+  border-radius:60px;
+  color:#fff;
+  font-size:34px;
+  font-weight:400;
+  padding:26px 72px;
+  cursor:pointer;
+  letter-spacing:0.5px;
+  transition:transform 0.1s, background 0.15s;
+  min-width:320px;
+}
+#stop-btn:active { transform:scale(0.96); background:var(--accent); color:#000; }
+
+#snooze-badge {
+  font-size:20px;
+  color:var(--warn);
+  min-height:28px;
+}
+
+/* ══ ADMIN ════════════════════════════════════════════════════ */
+#admin-btn {
+  display:none;
+}
+
+#admin-panel {
+  display:none;
+  position:fixed; inset:0;
+  background:#090912;
+  z-index:200;
+  overflow-y:auto;
+  padding:28px 24px 48px;
+  flex-direction:column;
+  gap:16px;
+}
+#admin-panel.open { display:flex; }
+
+#admin-panel h2 { font-size:22px; font-weight:400; border-bottom:1px solid var(--border); padding-bottom:12px; }
+
+.sec { font-size:12px; text-transform:uppercase; letter-spacing:2.5px; color:var(--text2); margin-top:8px; }
+
+#admin-panel input[type=text],
+#admin-panel input[type=time],
+#admin-panel textarea {
+  width:100%;
+  background:var(--bg3);
+  border:1px solid var(--border);
+  border-radius:10px;
+  color:var(--text);
+  font-size:17px;
+  padding:12px 16px;
+  font-family:inherit;
+}
+#admin-panel textarea { height:120px; resize:vertical; font-size:14px; line-height:1.5; }
+
+#times-list { display:flex; flex-wrap:wrap; gap:8px; }
+.t-tag {
+  background:var(--bg3);
+  border:1px solid var(--border);
+  border-radius:8px;
+  color:var(--accent);
+  padding:6px 10px;
+  font-size:15px;
+  display:flex; align-items:center; gap:6px;
+}
+.t-tag button { background:none; border:none; color:var(--red); font-size:17px; cursor:pointer; padding:0; line-height:1; }
+
+.row { display:flex; gap:10px; align-items:center; }
+
+.btn-save  { background:var(--accentd); border:none; border-radius:12px; color:#fff; font-size:19px; padding:16px; cursor:pointer; width:100%; }
+.btn-close { background:var(--bg3); border:1px solid var(--border); border-radius:12px; color:var(--text2); font-size:17px; padding:14px; cursor:pointer; width:100%; }
+.btn-test  { background:#2a1f00; border:1px solid var(--warn2, #ba7517); border-radius:10px; color:var(--warn); font-size:15px; padding:10px 18px; cursor:pointer; }
+
+.hint { font-size:12px; color:var(--text2); line-height:1.5; }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- CLOCK TOP -->
+  <div id="clock-block" onclick="handleClockTap()">
+    <div id="time-display">12:00</div>
+    <div id="ampm-display">PM</div>
+    <div id="date-display">Saturday, June 20</div>
+  </div>
+
+  <!-- CALENDAR MIDDLE -->
+  <div id="calendar-block">
+    <div id="cal-header">Today's Schedule</div>
+    <div id="cal-events">
+      <div id="cal-empty">Loading…</div>
+    </div>
+  </div>
+
+  <!-- NEXT REMINDER BOTTOM -->
+  <div id="next-bar">
+    <span id="next-label">Upcoming reminder:</span>
+    <span id="next-time">—</span>
+  </div>
+
+</div>
+
+<!-- ALARM OVERLAY -->
+<div id="alarm-overlay">
+  <div id="alarm-emoji">🚽</div>
+  <div id="alarm-name">Nancy!</div>
+  <div id="alarm-message">Time to take a bathroom break.</div>
+  <div id="alarm-speaker"></div>
+  <button id="stop-btn" onclick="stopAlarm()">I'm on my way ✓</button>
+  <div id="snooze-badge"></div>
+</div>
+
+<!-- SETTINGS BUTTON -->
+<button id="admin-btn" onclick="openAdmin()">⚙ Settings</button>
+
+<!-- SETTINGS PANEL -->
+<div id="admin-panel">
+  <h2>⚙ Settings</h2>
+
+  <div class="sec">Her name</div>
+  <input type="text" id="s-name" value="Nancy">
+
+  <div class="sec">Reminder interval</div>
+  <p class="hint">Timer resets to 2.5 hours every time Nancy presses "I'm on my way ✓".</p>
+
+  <div class="sec">Family alarm messages — shown FIRST each reminder cycle</div>
+  <p class="hint">One per line. Format: emoji | message text | who is speaking<br>Example: 👨 | Nancy, time to go pee! | — Dad</p>
+  <textarea id="s-family"></textarea>
+
+  <div class="sec">Celebrity snooze messages — shown on 2nd, 3rd, 4th snooze</div>
+  <p class="hint">Same format. These rotate in order each time she snoozes.</p>
+  <textarea id="s-celebs"></textarea>
+
+  <div class="sec">Dad's Google Calendar (iCal URL)</div>
+  <p class="hint">In Google Calendar → Settings → your calendar → "Secret address in iCal format"</p>
+  <input type="text" id="s-calurl" placeholder="https://calendar.google.com/calendar/ical/...">
+
+  <div class="sec">Test</div>
+  <div class="row">
+    <button class="btn-test" onclick="triggerAlarm(0)">▶ Test first alarm</button>
+    <button class="btn-test" onclick="triggerAlarm(1)">▶ Test 1st snooze</button>
+    <button class="btn-test" onclick="triggerAlarm(2)">▶ Test 2nd snooze</button>
+  </div>
+
+  <div class="sec">🔒 Lock the iPad (Guided Access)</div>
+  <p class="hint" style="line-height:1.8">
+    1. Go to <strong>Settings → Accessibility → Guided Access</strong> → turn ON<br>
+    2. Tap <strong>Passcode Settings</strong> → set a passcode<br>
+    3. Open Nancy's Clock in Safari<br>
+    4. Triple-click the <strong>side button</strong> (or home button on older iPad)<br>
+    5. Tap <strong>Start</strong> — the home button is now disabled<br>
+    <br>
+    To exit Guided Access: triple-click side button → enter passcode → tap End
+  </p>
+
+  <div style="height:8px"></div>
+  <button class="btn-save" onclick="saveAdmin()">Save & Close</button>
+  <button class="btn-close" onclick="closeAdmin()">Cancel</button>
+</div>
+
+<script>
+/* ══ DEFAULT CONTENT ══════════════════════════════════════════ */
+const DEF_FAMILY = [
+  { emoji:"👨", text:"Nancy, time to take a bathroom break!", speaker:"— Dad" },
+  { emoji:"👦", text:"Mom, go to the bathroom — we love you!", speaker:"— Your son" },
+  { emoji:"🏠", text:"Nancy, bathroom break time. Up you go!", speaker:"— The family" },
+];
+
+const DEF_CELEBS = [
+  { emoji:"🖖", text:"Nancy, this is Captain Kirk. I order you to visit the bathroom. Energize!", speaker:"— William Shatner" },
+  { emoji:"🐰", text:"Eh, what's up, Nancy? It's Bugs! Time to hit the little girls' room, doc!", speaker:"— Bugs Bunny" },
+  { emoji:"🤠", text:"Nancy, this is your moment of courage. Head on down to the bathroom, partner!", speaker:"— John Wayne" },
+  { emoji:"👸", text:"Nancy darling, a quick trip to the bathroom keeps you feeling fabulous!", speaker:"— Betty White" },
+  { emoji:"🎬", text:"Nancy! You've got to ask yourself — have you visited the bathroom lately? Well, have ya?", speaker:"— Clint Eastwood" },
+  { emoji:"🎤", text:"Nancy, I have a dream… that you will walk to the bathroom right now!", speaker:"— A famous voice" },
+  { emoji:"🚽", text:"Nancy, nobody puts Baby in a corner — but everybody goes to the bathroom!", speaker:"— Patrick Swayze" },
+];
+
+/* ══ STATE ════════════════════════════════════════════════════ */
+const RESET_MS = 2.5 * 60 * 60 * 1000; // 2.5 hours
+
+let S = {
+  name: "Nancy",
+  family: DEF_FAMILY,
+  celebs: DEF_CELEBS,
+  calUrl: "",
+  nextAlarmAt: null, // timestamp (ms) of next scheduled alarm
+};
+
+let alarmActive   = false;
+let snoozeCount   = 0;
+let snoozeTimer   = null;
+let mainTimer     = null;
+let celebIndex    = 0;
+let audioCtx      = null;
+let alarmInterval = null;
+let dismissTimer  = null;
+
+/* ══ PERSIST ══════════════════════════════════════════════════ */
+function loadState() {
+  try {
+    const d = localStorage.getItem("nc2");
+    if (d) {
+      const saved = JSON.parse(d);
+      S.name      = saved.name      || S.name;
+      S.calUrl    = saved.calUrl    || S.calUrl;
+      S.family    = saved.family    || S.family;
+      S.celebs    = saved.celebs    || S.celebs;
+      S.nextAlarmAt = saved.nextAlarmAt || null;
+    }
+  } catch(e){}
+}
+function saveState() {
+  try { localStorage.setItem("nc2", JSON.stringify(S)); } catch(e){}
+}
+
+/* ══ CLOCK ════════════════════════════════════════════════════ */
+function updateClock() {
+  const now = new Date();
+  const h   = now.getHours();
+  const m   = now.getMinutes();
+  const h12 = h % 12 || 12;
+  const ampm= h >= 12 ? "PM" : "AM";
+
+  document.getElementById("time-display").textContent =
+    `${h12}:${String(m).padStart(2,"0")}`;
+  document.getElementById("ampm-display").textContent = ampm;
+  document.getElementById("date-display").textContent = fmtDate(now);
+
+  updateNextBar();
+}
+
+function fmtDate(d) {
+  const days   = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}`;
+}
+
+function updateNextBar() {
+  if (!S.nextAlarmAt) {
+    document.getElementById("next-time").textContent = "—";
+    return;
+  }
+  const t   = new Date(S.nextAlarmAt);
+  const h   = t.getHours();
+  const h12 = h % 12 || 12;
+  const ampm= h >= 12 ? "PM" : "AM";
+  const mm  = String(t.getMinutes()).padStart(2,"0");
+  document.getElementById("next-time").textContent = `${h12}:${mm} ${ampm}`;
+}
+
+/* ── Schedule the main alarm timer ── */
+function scheduleNextAlarm() {
+  clearTimeout(mainTimer);
+  if (!S.nextAlarmAt) return;
+  const delay = S.nextAlarmAt - Date.now();
+  if (delay <= 0) {
+    // Overdue — fire immediately
+    snoozeCount = 0; celebIndex = 0; triggerAlarm(0);
+  } else {
+    mainTimer = setTimeout(() => {
+      snoozeCount = 0; celebIndex = 0; triggerAlarm(0);
+    }, delay);
+  }
+}
+
+/* ── Called once on boot and after each dismissal ── */
+function resetAlarmTimer() {
+  S.nextAlarmAt = Date.now() + RESET_MS;
+  saveState();
+  scheduleNextAlarm();
+  updateNextBar();
+}
+
+/* ══ CALENDAR ══════════════════════════════════════════════════ */
+function updateCalendar() {
+  if (!S.calUrl) {
+    showCalPlaceholder();
+    return;
+  }
+  fetchCal();
+}
+
+function showCalPlaceholder() {
+  document.getElementById("cal-events").innerHTML =
+    `<div id="cal-empty" style="font-size:30px;font-weight:300;color:var(--text2);line-height:1.5">
+      Dad's schedule will appear here<br>once his Google Calendar is connected.
+    </div>`;
+}
+
+async function fetchCal() {
+  try {
+    const url = `https://api.allorigins.win/get?url=${encodeURIComponent(S.calUrl)}`;
+    const r   = await fetch(url);
+    const d   = await r.json();
+    renderCalEvents(parseIcal(d.contents));
+  } catch(e) {
+    document.getElementById("cal-events").innerHTML =
+      `<div id="cal-empty" style="font-size:26px;color:var(--text2)">Couldn't reach calendar right now.</div>`;
+  }
+}
+
+function parseIcal(text) {
+  if (!text) return [];
+  const today = new Date();
+  const yyyymmdd = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,"0")}${String(today.getDate()).padStart(2,"0")}`;
+  const events = [];
+  const blocks = text.split("BEGIN:VEVENT").slice(1);
+  for (const b of blocks) {
+    const sum = b.match(/SUMMARY[^:]*:([^\r\n]+)/);
+    const dt  = b.match(/DTSTART[^:]*:(\d{8})/);
+    if (!sum || !dt || !dt[1].startsWith(yyyymmdd)) continue;
+    let timeStr = "";
+    const dtFull = b.match(/DTSTART[^:]*:(\d{8}T\d{6})/);
+    if (dtFull) {
+      const raw = dtFull[1];
+      const h = parseInt(raw.slice(9,11));
+      const m = raw.slice(11,13);
+      const h12 = h%12||12;
+      const ap  = h>=12?"PM":"AM";
+      timeStr = `${h12}:${m} ${ap}`;
+    }
+    events.push({ time: timeStr, text: sum[1].trim() });
+  }
+  return events;
+}
+
+function renderCalEvents(events) {
+  const el = document.getElementById("cal-events");
+  if (!events.length) {
+    el.innerHTML = `<div style="font-size:32px;font-weight:300;color:var(--text2)">Kim is home today.</div>`;
+    return;
+  }
+  el.innerHTML = events.map(e => `
+    <div class="cal-event">
+      <div class="cal-event-time">${e.time||"All day"}</div>
+      <div class="cal-event-text">Kim is at ${e.text}</div>
+    </div>`).join("");
+}
+
+/* ══ ALARM LOGIC ══════════════════════════════════════════════
+   snoozeCount 0  →  use family messages (round-robin)
+   snoozeCount 1+ →  use celeb messages (round-robin)
+═════════════════════════════════════════════════════════════ */
+function triggerAlarm(forcedSnooze) {
+  alarmActive = true;
+  clearTimeout(snoozeTimer);
+  stopBeep();
+
+  const sc = (forcedSnooze !== undefined) ? forcedSnooze : snoozeCount;
+  let msg;
+
+  if (sc === 0) {
+    const idx = Math.floor(Math.random() * S.family.length);
+    msg = S.family[idx] || DEF_FAMILY[0];
+  } else {
+    msg = S.celebs[celebIndex % S.celebs.length] || DEF_CELEBS[0];
+    celebIndex++;
+  }
+
+  document.getElementById("alarm-emoji").textContent   = msg.emoji || "🚽";
+  document.getElementById("alarm-name").textContent    = S.name + "!";
+  document.getElementById("alarm-message").textContent = msg.text;
+  document.getElementById("alarm-speaker").textContent = msg.speaker || "";
+
+  document.getElementById("snooze-badge").textContent =
+    sc > 0 ? `Reminder #${sc+1} — ${S.name}, please get up! 🙏` : "";
+
+  document.getElementById("alarm-overlay").classList.add("active");
+
+  // Play chime for 30 seconds
+  startBeep();
+  snoozeTimer = setTimeout(() => {
+    if (alarmActive) {
+      stopBeep();
+    }
+  }, 30 * 1000);
+
+  // After 30 sec overlay stays visible — auto-dismiss overlay after 30s
+  // then wait 5 min and repeat forever until button pressed
+  setTimeout(() => {
+    if (alarmActive) {
+      snoozeCount++;
+      stopAlarmVisuals();
+      snoozeTimer = setTimeout(() => {
+        if (alarmActive) triggerAlarm(snoozeCount);
+      }, 5 * 60 * 1000);
+    }
+  }, 30 * 1000);
+}
+
+function stopAlarm() {
+  alarmActive = false;
+  snoozeCount = 0;
+  celebIndex  = 0;
+  clearTimeout(snoozeTimer);
+  clearTimeout(dismissTimer);
+  stopBeep();
+  stopAlarmVisuals();
+  // Reset 2.5-hour countdown from right now
+  resetAlarmTimer();
+}
+
+function stopAlarmVisuals() {
+  document.getElementById("alarm-overlay").classList.remove("active");
+}
+
+/* ══ SOUND ════════════════════════════════════════════════════ */
+function startBeep() {
+  stopBeep();
+  playChime();
+  alarmInterval = setInterval(playChime, 8000);
+}
+
+function stopBeep() {
+  clearInterval(alarmInterval);
+  alarmInterval = null;
+  try { if (audioCtx) { audioCtx.close(); audioCtx = null; } } catch(e){}
+}
+
+function playChime() {
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const notes = [
+      {f:523.25, t:0,   d:0.5},
+      {f:659.25, t:0.55,d:0.5},
+      {f:783.99, t:1.1, d:0.8},
+      {f:659.25, t:2.2, d:0.4},
+      {f:783.99, t:2.7, d:0.6},
+    ];
+    notes.forEach(({f,t,d}) => {
+      const osc  = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.type = "sine";
+      osc.frequency.value = f;
+      gain.gain.setValueAtTime(0, audioCtx.currentTime+t);
+      gain.gain.linearRampToValueAtTime(0.28, audioCtx.currentTime+t+0.06);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+t+d);
+      osc.start(audioCtx.currentTime+t);
+      osc.stop(audioCtx.currentTime+t+d+0.05);
+    });
+  } catch(e){}
+}
+
+/* ══ ADMIN ════════════════════════════════════════════════════ */
+function openAdmin() {
+  document.getElementById("s-name").value   = S.name;
+  document.getElementById("s-calurl").value = S.calUrl||"";
+  document.getElementById("s-family").value = S.family.map(m=>`${m.emoji}|${m.text}|${m.speaker}`).join("\n");
+  document.getElementById("s-celebs").value = S.celebs.map(m=>`${m.emoji}|${m.text}|${m.speaker}`).join("\n");
+  document.getElementById("admin-panel").classList.add("open");
+}
+
+function closeAdmin() {
+  document.getElementById("admin-panel").classList.remove("open");
+}
+
+function saveAdmin() {
+  S.name   = document.getElementById("s-name").value.trim() || "Nancy";
+  S.calUrl = document.getElementById("s-calurl").value.trim();
+
+  const parseMessages = raw =>
+    raw.split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{
+      const p = l.split("|");
+      return { emoji:p[0]?.trim()||"🚽", text:p[1]?.trim()||l, speaker:p[2]?.trim()||"" };
+    });
+
+  const fRaw = document.getElementById("s-family").value.trim();
+  const cRaw = document.getElementById("s-celebs").value.trim();
+  if (fRaw) S.family = parseMessages(fRaw);
+  if (cRaw) S.celebs = parseMessages(cRaw);
+
+  saveState();
+  closeAdmin();
+  updateCalendar();
+}
+
+
+
+/* ══ 5-TAP TO OPEN SETTINGS ══════════════════════════════════ */
+let tapCount = 0;
+let tapTimer = null;
+
+function handleClockTap() {
+  if (alarmActive) return; // don't interfere with alarm
+  tapCount++;
+  clearTimeout(tapTimer);
+  if (tapCount >= 5) {
+    tapCount = 0;
+    openAdmin();
+  } else {
+    // Reset count if no tap within 2 seconds
+    tapTimer = setTimeout(() => { tapCount = 0; }, 2000);
+  }
+}
+
+/* ══ BOOT ══════════════════════════════════════════════════ */
+loadState();
+
+// If no saved alarm time, set first one for 2.5 hours from now
+if (!S.nextAlarmAt || S.nextAlarmAt < Date.now()) {
+  S.nextAlarmAt = Date.now() + RESET_MS;
+  saveState();
+}
+
+scheduleNextAlarm();
+updateClock();
+setInterval(updateClock, 1000);
+updateCalendar();
+setInterval(updateCalendar, 10*60*1000);
+
+document.addEventListener("visibilitychange", ()=>{
+  if (!document.hidden) {
+    updateClock();
+    updateCalendar();
+    // Re-schedule in case timer was lost while app was backgrounded
+    scheduleNextAlarm();
+  }
+});
+document.addEventListener("touchstart",()=>{},{passive:true});
+</script>
+</body>
+</html>
