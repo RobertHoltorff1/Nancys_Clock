@@ -89,17 +89,16 @@ html, body {
   background: var(--bg3);
   border: 1px solid var(--border);
   border-radius: 20px;
-  padding: 20px 28px;
+  padding: 24px 28px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  gap: 12px;
+  gap: 16px;
   overflow: hidden;
-  align-self: start;
 }
 
 #cal-header {
-  font-size: 36px;
+  font-size: 42px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 3px;
@@ -109,7 +108,7 @@ html, body {
 #cal-events {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 18px;
 }
 
 .cal-event {
@@ -119,25 +118,25 @@ html, body {
 }
 
 .cal-event-time {
-  font-size: 34px;
-  font-weight: 300;
+  font-size: 36px;
+  font-weight: 400;
   color: var(--accent);
-  min-width: 120px;
+  min-width: 130px;
   line-height: 1.1;
   flex-shrink: 0;
 }
 
 .cal-event-text {
-  font-size: 38px;
-  font-weight: 300;
-  color: var(--text);
+  font-size: 40px;
+  font-weight: 400;
+  color: #ffffff;
   line-height: 1.2;
 }
 
 #cal-empty {
-  font-size: 36px;
-  font-weight: 300;
-  color: var(--text2);
+  font-size: 38px;
+  font-weight: 400;
+  color: #ffffff;
   line-height: 1.4;
 }
 
@@ -150,11 +149,57 @@ html, body {
   align-items:center;
   justify-content:center;
   gap:12px;
-  padding: 18px 24px;
+  padding: 20px 24px;
 }
 
-#next-label { font-size:30px; color:var(--text2); }
-#next-time  { font-size:30px; color:var(--accent); font-weight:700; }
+#next-label { font-size:34px; color:var(--text2); }
+#next-time  { font-size:34px; color:var(--accent); font-weight:700; }
+
+/* ══ PILL OVERLAY ═════════════════════════════════════════════ */
+#pill-overlay {
+  display:none;
+  position:fixed; inset:0;
+  background:rgba(6,6,14,0.97);
+  z-index:90;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:32px;
+  padding:40px 36px;
+  text-align:center;
+}
+#pill-overlay.active { display:flex; }
+
+#pill-emoji { font-size:120px; }
+
+#pill-title {
+  font-size:72px;
+  font-weight:600;
+  color:#ffffff;
+  line-height:1;
+}
+
+#pill-message {
+  font-size:48px;
+  font-weight:300;
+  color:var(--text);
+  line-height:1.3;
+  max-width:680px;
+}
+
+#pill-btn {
+  background:var(--accentd);
+  border:none;
+  border-radius:60px;
+  color:#fff;
+  font-size:42px;
+  font-weight:400;
+  padding:32px 80px;
+  cursor:pointer;
+  min-width:380px;
+  margin-top:16px;
+}
+#pill-btn:active { background:var(--accent); color:#000; }
 
 /* ══ ALARM OVERLAY ════════════════════════════════════════════ */
 #alarm-overlay {
@@ -317,6 +362,14 @@ html, body {
   <div id="alarm-speaker"></div>
   <button id="stop-btn" onclick="stopAlarm()">I'm on my way ✓</button>
   <div id="snooze-badge"></div>
+</div>
+
+<!-- PILL OVERLAY -->
+<div id="pill-overlay">
+  <div id="pill-emoji">💊</div>
+  <div id="pill-title">Good Morning!</div>
+  <div id="pill-message">Time for Nancy's morning pills.</div>
+  <button id="pill-btn" onclick="pillsTaken()">Pills taken ✓</button>
 </div>
 
 <!-- SETTINGS BUTTON -->
@@ -502,7 +555,9 @@ async function fetchCal() {
     const url = `https://api.allorigins.win/get?url=${encodeURIComponent(S.calUrl)}`;
     const r   = await fetch(url);
     const d   = await r.json();
-    renderCalEvents(parseIcal(d.contents));
+    const events = parseIcal(d.contents);
+    renderCalEvents(events);
+    scheduleEveningPills(events);
   } catch(e) {
     document.getElementById("cal-events").innerHTML =
       `<div id="cal-empty" style="font-size:26px;color:var(--text2)">Couldn't reach calendar right now.</div>`;
@@ -534,17 +589,69 @@ function parseIcal(text) {
   return events;
 }
 
+// Keywords that show as-is (no "Kim is at" prefix)
+const PASSTHROUGH = ['dinner','lunch','breakfast','💊','pill','supper','tonight'];
+
+function smartPrefix(text) {
+  const lower = text.toLowerCase();
+  if (PASSTHROUGH.some(k => lower.startsWith(k))) return text;
+  return 'Kim is at ' + text;
+}
+
 function renderCalEvents(events) {
   const el = document.getElementById("cal-events");
   if (!events.length) {
-    el.innerHTML = `<div style="font-size:32px;font-weight:300;color:var(--text2)">Kim is home today.</div>`;
+    el.innerHTML = `<div id="cal-empty">Kim is home today.</div>`;
     return;
   }
   el.innerHTML = events.map(e => `
     <div class="cal-event">
       <div class="cal-event-time">${e.time||"All day"}</div>
-      <div class="cal-event-text">Kim is at ${e.text}</div>
+      <div class="cal-event-text">${smartPrefix(e.text)}</div>
     </div>`).join("");
+}
+
+/* ── Evening pill reminder ── */
+let eveningPillTimer = null;
+
+function scheduleEveningPills(events) {
+  clearTimeout(eveningPillTimer);
+  const now = new Date();
+
+  // Find dinner event
+  let dinnerMins = 18 * 60; // default 6 PM
+  const dinnerKeywords = ['dinner','supper','tonight'];
+  for (const e of events) {
+    if (e.time && dinnerKeywords.some(k => e.text.toLowerCase().startsWith(k))) {
+      const [rawH, rawM] = e.time.replace(/[APM]/g,'').trim().split(':').map(Number);
+      const isPM = e.time.includes('PM');
+      const h24 = isPM && rawH !== 12 ? rawH + 12 : (!isPM && rawH === 12 ? 0 : rawH);
+      dinnerMins = h24 * 60 + rawM;
+      break;
+    }
+  }
+
+  const pillMins = dinnerMins - 5;
+  const nowMins  = now.getHours() * 60 + now.getMinutes();
+  const delay    = (pillMins - nowMins) * 60 * 1000;
+
+  if (delay > 0) {
+    eveningPillTimer = setTimeout(() => {
+      showEveningPills();
+    }, delay);
+  }
+}
+
+function showEveningPills() {
+  // Show a gentle non-intrusive banner at bottom for 2 minutes
+  const bar = document.getElementById("next-bar");
+  const orig = bar.innerHTML;
+  bar.innerHTML = `<span style="font-size:34px;color:#ffffff">💊 Time for Nancy's evening pills — dinner is almost ready!</span>`;
+  bar.style.background = 'var(--accentd)';
+  setTimeout(() => {
+    bar.innerHTML = orig;
+    bar.style.background = '';
+  }, 2 * 60 * 1000);
 }
 
 /* ══ ALARM LOGIC ══════════════════════════════════════════════
@@ -688,6 +795,49 @@ function saveAdmin() {
 
 
 
+/* ══ PILL OVERLAY LOGIC ═══════════════════════════════════════ */
+let morningPillTimer = null;
+let pillsGivenToday  = false;
+
+function showMorningPills() {
+  if (pillsGivenToday) return;
+  document.getElementById("pill-overlay").classList.add("active");
+}
+
+function pillsTaken() {
+  pillsGivenToday = true;
+  document.getElementById("pill-overlay").classList.remove("active");
+  // Start the bathroom countdown from right now
+  resetAlarmTimer();
+}
+
+function scheduleMorningPills() {
+  clearTimeout(morningPillTimer);
+  const now  = new Date();
+  const pill = new Date();
+  pill.setHours(8, 0, 0, 0);
+  if (pill <= now) {
+    // Already past 8 AM — show immediately if pills not given
+    if (!pillsGivenToday) showMorningPills();
+    return;
+  }
+  morningPillTimer = setTimeout(() => {
+    showMorningPills();
+  }, pill - now);
+}
+
+// Reset pillsGivenToday at midnight
+function scheduleMidnightReset() {
+  const now  = new Date();
+  const next = new Date();
+  next.setHours(24, 0, 0, 0);
+  setTimeout(() => {
+    pillsGivenToday = false;
+    scheduleMorningPills();
+    scheduleMidnightReset();
+  }, next - now);
+}
+
 /* ══ 5-TAP TO OPEN SETTINGS ══════════════════════════════════ */
 let tapCount = 0;
 let tapTimer = null;
@@ -715,6 +865,8 @@ if (!S.nextAlarmAt || S.nextAlarmAt < Date.now()) {
 }
 
 scheduleNextAlarm();
+scheduleMorningPills();
+scheduleMidnightReset();
 updateClock();
 setInterval(updateClock, 1000);
 updateCalendar();
