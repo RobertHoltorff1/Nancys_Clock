@@ -620,28 +620,36 @@ function showCalPlaceholder() {
 }
 
 async function fetchCal() {
+  // Each entry: [url-builder, response-parser]
   const proxies = [
-    url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-    url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    [
+      url => `https://gcal-cors-proxy.vercel.app?url=${encodeURIComponent(url)}`,
+      r   => r.text()
+    ],
+    [
+      url => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+      r   => r.text()
+    ],
+    [
+      url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+      r   => r.json().then(d => d.contents)
+    ],
   ];
 
-  for (const proxy of proxies) {
+  for (const [buildUrl, parseResp] of proxies) {
     try {
-      const r = await fetch(proxy(S.calUrl), { signal: AbortSignal.timeout(8000) });
+      const r = await fetch(buildUrl(S.calUrl), { signal: AbortSignal.timeout(10000) });
       if (!r.ok) continue;
-      const text = proxy === proxies[0]
-        ? (await r.json()).contents
-        : await r.text();
-      if (!text) continue;
+      const text = await parseResp(r);
+      if (!text || !text.includes('BEGIN:VCALENDAR')) continue;
       const events = parseIcal(text);
       renderCalEvents(events);
       scheduleEveningPills(events);
-      return; // success — stop trying
+      return;
     } catch(e) {
-      continue; // try next proxy
+      continue;
     }
   }
-  // All proxies failed
   document.getElementById("cal-events").innerHTML =
     `<div id="cal-empty">Calendar unavailable — will retry shortly.</div>`;
 }
