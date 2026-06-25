@@ -385,7 +385,7 @@ html, body {
   <div id="pill-emoji">💊</div>
   <div id="pill-title">Good Morning!</div>
   <div id="pill-message">Time for Nancy's morning pills.</div>
-  <button id="pill-btn" onclick="pillsTaken()">Tap when pills are given</button>
+  <button id="pill-btn" onclick="pillsTaken()">Tap when all pills are swallowed</button>
 </div>
 
 <!-- SETTINGS BUTTON -->
@@ -658,6 +658,8 @@ function parseIcal(text) {
     const sum = b.match(/^SUMMARY[^:]*:(.+)$/m);
     if (!sum) continue;
     const title = sum[1].trim();
+    // Filter out personal reminders not meant for Nancy
+    if (/\brob\b/i.test(title)) continue;
 
     const dtStartMatch = b.match(/^DTSTART([^:]*):(.+)$/m);
     const dtEndMatch   = b.match(/^DTEND([^:]*):(.+)$/m);
@@ -738,9 +740,40 @@ function parseIcal(text) {
       continue;
     }
 
-    // Tomorrow preview
+    // Tomorrow preview — only show after noon today
     if (startsTomorrow) {
-      events.push({ time: "Tomorrow", text: title, preview: true, multiDay: false });
+      const currentHour = now.getHours();
+      if (currentHour >= 12) {
+        // Calculate countdown to event
+        const eventDate = new Date(
+          parseInt(startYMD.slice(0,4)),
+          parseInt(startYMD.slice(4,6))-1,
+          parseInt(startYMD.slice(6,8))
+        );
+        if (tMatch && !isAllDay) {
+          let h = parseInt(tMatch[1]);
+          const m = parseInt(tMatch[2]);
+          if (startVal.endsWith('Z')) {
+            const utcDate = new Date(Date.UTC(
+              parseInt(startYMD.slice(0,4)),
+              parseInt(startYMD.slice(4,6))-1,
+              parseInt(startYMD.slice(6,8)),
+              h, m
+            ));
+            eventDate.setTime(utcDate.getTime());
+          } else {
+            eventDate.setHours(h, m, 0, 0);
+          }
+        } else {
+          // All day — set to 8 AM tomorrow
+          eventDate.setHours(8, 0, 0, 0);
+        }
+        const diffMs   = eventDate - now;
+        const diffHrs  = Math.floor(diffMs / 3600000);
+        const diffMins = Math.floor((diffMs % 3600000) / 60000);
+        const countdown = diffHrs > 0 ? `in ${diffHrs} hr ${diffMins} min` : `in ${diffMins} min`;
+        events.push({ time: "Tomorrow", text: title, preview: true, multiDay: false, countdown });
+      }
     }
   }
 
@@ -755,26 +788,16 @@ function parseIcal(text) {
   return events;
 }
 
-// Keywords that show as-is (no "Kim is at" prefix)
-const PASSTHROUGH = ['dinner','lunch','breakfast','💊','pill','supper','tonight'];
-
+// Show events exactly as written — no prefix added
+// Whoever enters the event writes it the way Nancy should read it
 function smartPrefix(text) {
-  const lower = text.toLowerCase();
-  // Pass through food/pill events
-  if (PASSTHROUGH.some(k => lower.startsWith(k))) return text;
-  // If title already mentions Kim, don't double up
-  if (lower.startsWith('kim ') || lower.startsWith("kim's ")) {
-    // Clean up "Kim goes fishing" -> "Kim is fishing" if needed
-    // Just return as-is with capital K
-    return text.charAt(0).toUpperCase() + text.slice(1);
-  }
-  return 'Kim is at ' + text;
+  return text;
 }
 
 function renderCalEvents(events) {
   const el = document.getElementById("cal-events");
   if (!events.length) {
-    el.innerHTML = `<div id="cal-empty">Kim is home today.</div>`;
+    el.innerHTML = `<div id="cal-empty">Nothing on the schedule today.</div>`;
     return;
   }
   el.innerHTML = events.map(e => {
@@ -789,11 +812,13 @@ function renderCalEvents(events) {
         </div>`;
     }
     if (e.preview) {
-      // Tomorrow preview: slightly dimmer
       return `
         <div class="cal-event">
           <div class="cal-event-time" style="color:#7dd8f0;font-size:30px">Tomorrow</div>
-          <div class="cal-event-text" style="color:#c8e8ff;font-size:34px">${smartPrefix(e.text)}</div>
+          <div class="cal-event-text" style="color:#c8e8ff;font-size:34px">
+            ${smartPrefix(e.text)}
+            ${e.countdown ? `<span style="font-size:26px;color:#7dd8f0;font-weight:400"> · ${e.countdown}</span>` : ''}
+          </div>
         </div>`;
     }
     return `
