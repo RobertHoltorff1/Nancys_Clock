@@ -1,1 +1,7 @@
-
+{
+  "functions": {
+    "api/proxy.js": {
+      "runtime": "node@18"
+    }
+  }
+}
