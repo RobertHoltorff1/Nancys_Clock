@@ -627,11 +627,22 @@ async function fetchCal() {
     const text = await r.text();
     if (!text || !text.includes('BEGIN:VCALENDAR')) throw new Error('Invalid calendar data');
     const events = parseIcal(text);
+    // DEBUG: show raw info if no events found
+    if (events.length === 0) {
+      const today = new Date();
+      const lines = text.split('\n').filter(l => l.includes('DTSTART') || l.includes('SUMMARY') || l.includes('DTEND')).slice(0,12);
+      document.getElementById("cal-events").innerHTML =
+        `<div style="font-size:16px;color:#fff;word-break:break-all;line-height:1.8">
+          Today: ${today.toISOString().slice(0,10)}<br>
+          ${lines.map(l => l.trim().replace(/</g,'&lt;')).join('<br>')}
+        </div>`;
+      return;
+    }
     renderCalEvents(events);
     scheduleEveningPills(events);
   } catch(e) {
     document.getElementById("cal-events").innerHTML =
-      `<div id="cal-empty">Calendar unavailable — will retry shortly.</div>`;
+      `<div id="cal-empty">Error: ${e.message}</div>`;
   }
 }
 
