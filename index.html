@@ -150,8 +150,8 @@ html, body {
   flex-direction: column;
   align-items:center;
   justify-content:center;
-  gap:4px;
-  padding: 16px 24px;
+  gap:2px;
+  padding: 16px 16px;
   margin-top: auto;
   width: 100%;
 }
@@ -160,13 +160,14 @@ html, body {
   display:flex;
   align-items:center;
   justify-content:center;
-  gap:16px;
-  flex-wrap: wrap;
+  gap:12px;
+  flex-wrap: nowrap;
+  width: 100%;
 }
 
-#next-label { font-size:38px; color:#ffffff; font-weight:600; }
-#next-time  { font-size:38px; color:#ffffff; font-weight:700; }
-#next-countdown { font-size:30px; color:#7dd8f0; font-weight:400; letter-spacing:0.5px; }
+#next-label { font-size:34px; color:#ffffff; font-weight:600; white-space:nowrap; }
+#next-time  { font-size:34px; color:#ffffff; font-weight:800; white-space:nowrap; }
+#next-countdown { font-size:36px; color:#7dd8f0; font-weight:600; letter-spacing:0.5px; text-align:center; width:100%; }
 
 /* ══ PILL OVERLAY ═════════════════════════════════════════════ */
 #pill-overlay {
@@ -362,7 +363,7 @@ html, body {
   <!-- NEXT REMINDER BOTTOM -->
   <div id="next-bar">
     <div id="next-row1">
-      <span id="next-label">Upcoming bathroom break</span>
+      <span id="next-label">Next bathroom break</span>
       <span id="next-time">—</span>
     </div>
     <div id="next-countdown"></div>
