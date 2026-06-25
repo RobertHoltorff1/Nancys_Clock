@@ -620,38 +620,19 @@ function showCalPlaceholder() {
 }
 
 async function fetchCal() {
-  // Each entry: [url-builder, response-parser]
-  const proxies = [
-    [
-      url => `https://gcal-cors-proxy.vercel.app?url=${encodeURIComponent(url)}`,
-      r   => r.text()
-    ],
-    [
-      url => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
-      r   => r.text()
-    ],
-    [
-      url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-      r   => r.json().then(d => d.contents)
-    ],
-  ];
-
-  for (const [buildUrl, parseResp] of proxies) {
-    try {
-      const r = await fetch(buildUrl(S.calUrl), { signal: AbortSignal.timeout(10000) });
-      if (!r.ok) continue;
-      const text = await parseResp(r);
-      if (!text || !text.includes('BEGIN:VCALENDAR')) continue;
-      const events = parseIcal(text);
-      renderCalEvents(events);
-      scheduleEveningPills(events);
-      return;
-    } catch(e) {
-      continue;
-    }
+  const proxyUrl = `https://nancys-clock-b1ucpjag7-nancy-s-alzheimers-reminders.vercel.app/api/proxy?url=${encodeURIComponent(S.calUrl)}`;
+  try {
+    const r = await fetch(proxyUrl, { signal: AbortSignal.timeout(10000) });
+    if (!r.ok) throw new Error('Proxy returned ' + r.status);
+    const text = await r.text();
+    if (!text || !text.includes('BEGIN:VCALENDAR')) throw new Error('Invalid calendar data');
+    const events = parseIcal(text);
+    renderCalEvents(events);
+    scheduleEveningPills(events);
+  } catch(e) {
+    document.getElementById("cal-events").innerHTML =
+      `<div id="cal-empty">Calendar unavailable — will retry shortly.</div>`;
   }
-  document.getElementById("cal-events").innerHTML =
-    `<div id="cal-empty">Calendar unavailable — will retry shortly.</div>`;
 }
 
 function parseIcal(text) {
