@@ -36,10 +36,10 @@ html, body {
 /* ══ MAIN LAYOUT ══════════════════════════════════════════════ */
 #app {
   width:100%; height:100%;
-  display:grid;
-  grid-template-rows: auto 1fr auto;
-  padding: 28px 24px 20px;
-  gap: 16px;
+  display:flex;
+  flex-direction:column;
+  padding: 24px 24px 20px;
+  gap: 12px;
 }
 
 /* ── TOP: CLOCK ── */
@@ -72,16 +72,16 @@ html, body {
   font-size: 38px;
   font-weight: 700;
   color: #ffffff;
-  margin-top: 6px;
+  margin-top: 4px;
   letter-spacing: 0.5px;
 }
 
 /* ── DIVIDER ── */
 #clock-divider {
-  width: 80%;
+  width: 85%;
   height: 1px;
   background: var(--border);
-  margin: 0 auto;
+  margin: 4px auto;
 }
 
 /* ── MIDDLE: CALENDAR ── */
@@ -89,26 +89,27 @@ html, body {
   background: var(--bg3);
   border: 1px solid var(--border);
   border-radius: 20px;
-  padding: 24px 28px;
+  padding: 20px 28px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  gap: 16px;
+  gap: 14px;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 #cal-header {
-  font-size: 42px;
+  font-size: 40px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 3px;
-  color: #ffffff;
+  color: #a8f0dc;
 }
 
 #cal-events {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
 }
 
 .cal-event {
@@ -127,15 +128,15 @@ html, body {
 }
 
 .cal-event-text {
-  font-size: 40px;
-  font-weight: 400;
+  font-size: 42px;
+  font-weight: 500;
   color: #ffffff;
   line-height: 1.2;
 }
 
 #cal-empty {
-  font-size: 38px;
-  font-weight: 400;
+  font-size: 40px;
+  font-weight: 500;
   color: #ffffff;
   line-height: 1.4;
 }
@@ -146,14 +147,26 @@ html, body {
   border: 1px solid var(--border);
   border-radius: 20px;
   display:flex;
+  flex-direction: column;
   align-items:center;
   justify-content:center;
-  gap:12px;
-  padding: 20px 24px;
+  gap:4px;
+  padding: 16px 24px;
+  margin-top: auto;
+  width: 100%;
 }
 
-#next-label { font-size:34px; color:var(--text2); }
-#next-time  { font-size:34px; color:var(--accent); font-weight:700; }
+#next-row1 {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:16px;
+  flex-wrap: wrap;
+}
+
+#next-label { font-size:38px; color:#ffffff; font-weight:600; }
+#next-time  { font-size:38px; color:#ffffff; font-weight:700; }
+#next-countdown { font-size:30px; color:#7dd8f0; font-weight:400; letter-spacing:0.5px; }
 
 /* ══ PILL OVERLAY ═════════════════════════════════════════════ */
 #pill-overlay {
@@ -348,8 +361,11 @@ html, body {
 
   <!-- NEXT REMINDER BOTTOM -->
   <div id="next-bar">
-    <span id="next-label">Upcoming reminder:</span>
-    <span id="next-time">—</span>
+    <div id="next-row1">
+      <span id="next-label">Upcoming bathroom break</span>
+      <span id="next-time">—</span>
+    </div>
+    <div id="next-countdown"></div>
   </div>
 
 </div>
@@ -445,7 +461,7 @@ let S = {
   name: "Nancy",
   family: DEF_FAMILY,
   celebs: DEF_CELEBS,
-  calUrl: "",
+  calUrl: "https://calendar.google.com/calendar/ical/7ef26e43ec5fa67ca57c7923853ee32dcd832c030216b6393500fa57ee696df1%40group.calendar.google.com/private-71c90932688a1632f35fc7420669a5cf/basic.ics",
   nextAlarmAt: null, // timestamp (ms) of next scheduled alarm
 };
 
@@ -498,17 +514,49 @@ function fmtDate(d) {
   return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}`;
 }
 
+function isQuietHours() {
+  const h = new Date().getHours();
+  return h >= 22 || h < 10; // 10 PM to 10 AM
+}
+
 function updateNextBar() {
+  const timeEl      = document.getElementById("next-time");
+  const countdownEl = document.getElementById("next-countdown");
+
   if (!S.nextAlarmAt) {
-    document.getElementById("next-time").textContent = "—";
+    timeEl.textContent = "—";
+    countdownEl.textContent = "";
     return;
   }
-  const t   = new Date(S.nextAlarmAt);
-  const h   = t.getHours();
-  const h12 = h % 12 || 12;
-  const ampm= h >= 12 ? "PM" : "AM";
-  const mm  = String(t.getMinutes()).padStart(2,"0");
-  document.getElementById("next-time").textContent = `${h12}:${mm} ${ampm}`;
+
+  const t    = new Date(S.nextAlarmAt);
+  const h    = t.getHours();
+  const h12  = h % 12 || 12;
+  const ampm = h >= 12 ? "PM" : "AM";
+  const mm   = String(t.getMinutes()).padStart(2,"0");
+  timeEl.textContent = `${h12}:${mm} ${ampm}`;
+
+  // Countdown
+  const diff = S.nextAlarmAt - Date.now();
+  if (diff > 0) {
+    const totalMin = Math.floor(diff / 60000);
+    const hrs      = Math.floor(totalMin / 60);
+    const mins     = totalMin % 60;
+    if (hrs > 0) {
+      countdownEl.textContent = `in ${hrs} hr ${mins} min`;
+    } else if (mins > 0) {
+      countdownEl.textContent = `in ${mins} min`;
+    } else {
+      countdownEl.textContent = `any moment now`;
+    }
+  } else {
+    countdownEl.textContent = "";
+  }
+
+  // Show quiet hours message if in quiet window
+  if (isQuietHours()) {
+    countdownEl.textContent = "No reminders until 10:00 AM";
+  }
 }
 
 /* ── Schedule the main alarm timer ── */
@@ -517,11 +565,32 @@ function scheduleNextAlarm() {
   if (!S.nextAlarmAt) return;
   const delay = S.nextAlarmAt - Date.now();
   if (delay <= 0) {
-    // Overdue — fire immediately
-    snoozeCount = 0; celebIndex = 0; triggerAlarm(0);
+    // Overdue — only fire if not in quiet hours
+    if (!isQuietHours()) {
+      snoozeCount = 0; celebIndex = 0; triggerAlarm(0);
+    } else {
+      // Push to 10 AM if in quiet hours
+      const next10 = new Date();
+      next10.setHours(10, 0, 0, 0);
+      if (next10 <= new Date()) next10.setDate(next10.getDate() + 1);
+      S.nextAlarmAt = next10.getTime();
+      saveState();
+      scheduleNextAlarm();
+    }
   } else {
     mainTimer = setTimeout(() => {
-      snoozeCount = 0; celebIndex = 0; triggerAlarm(0);
+      if (!isQuietHours()) {
+        snoozeCount = 0; celebIndex = 0; triggerAlarm(0);
+      } else {
+        // Quiet hours — push to 10 AM
+        const next10 = new Date();
+        next10.setHours(10, 0, 0, 0);
+        if (next10 <= new Date()) next10.setDate(next10.getDate() + 1);
+        S.nextAlarmAt = next10.getTime();
+        saveState();
+        scheduleNextAlarm();
+        updateNextBar();
+      }
     }, delay);
   }
 }
@@ -566,26 +635,86 @@ async function fetchCal() {
 
 function parseIcal(text) {
   if (!text) return [];
-  const today = new Date();
-  const yyyymmdd = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,"0")}${String(today.getDate()).padStart(2,"0")}`;
+  const today    = new Date();
+  const tomorrow = new Date(today); tomorrow.setDate(today.getDate()+1);
+
+  function toYMD(d) {
+    return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
+  }
+  const todayYMD    = toYMD(today);
+  const tomorrowYMD = toYMD(tomorrow);
+
   const events = [];
   const blocks = text.split("BEGIN:VEVENT").slice(1);
+
   for (const b of blocks) {
-    const sum = b.match(/SUMMARY[^:]*:([^\r\n]+)/);
-    const dt  = b.match(/DTSTART[^:]*:(\d{8})/);
-    if (!sum || !dt || !dt[1].startsWith(yyyymmdd)) continue;
+    const sum    = b.match(/SUMMARY[^:]*:([^\r\n]+)/);
+    if (!sum) continue;
+    const title  = sum[1].trim();
+
+    // Get start date
+    const dtStart = b.match(/DTSTART[^:]*:([^\r\n]+)/);
+    const dtEnd   = b.match(/DTEND[^:]*:([^\r\n]+)/);
+    if (!dtStart) continue;
+
+    const startRaw = dtStart[1].trim();
+    const endRaw   = dtEnd ? dtEnd[1].trim() : "";
+    const startYMD = startRaw.slice(0,8);
+    const endYMD   = endRaw.slice(0,8);
+
+    // Check if multi-day event spanning today
+    const isMultiDay = endRaw && endYMD > startYMD;
+    const spansToday = isMultiDay && startYMD <= todayYMD && endYMD > todayYMD;
+
+    // Parse time if available
     let timeStr = "";
-    const dtFull = b.match(/DTSTART[^:]*:(\d{8}T\d{6})/);
-    if (dtFull) {
-      const raw = dtFull[1];
-      const h = parseInt(raw.slice(9,11));
-      const m = raw.slice(11,13);
+    const tMatch = startRaw.match(/T(\d{2})(\d{2})/);
+    if (tMatch) {
+      let h = parseInt(tMatch[1]);
+      const m = tMatch[2];
+      // Handle UTC — rough local offset adjustment
+      const offset = -today.getTimezoneOffset() / 60;
+      h = (h + offset + 24) % 24;
       const h12 = h%12||12;
       const ap  = h>=12?"PM":"AM";
       timeStr = `${h12}:${m} ${ap}`;
     }
-    events.push({ time: timeStr, text: sum[1].trim() });
+
+    // Today's single-day events
+    if (startYMD === todayYMD && !isMultiDay) {
+      events.push({ time: timeStr, text: title, multiDay: false });
+      continue;
+    }
+
+    // Multi-day events spanning today
+    if (spansToday) {
+      // Calculate days remaining
+      const endDate  = new Date(
+        parseInt(endYMD.slice(0,4)),
+        parseInt(endYMD.slice(4,6))-1,
+        parseInt(endYMD.slice(6,8))
+      );
+      const daysLeft = Math.ceil((endDate - today) / 86400000);
+      const suffix   = daysLeft === 1 ? "back tomorrow" : `back in ${daysLeft} days`;
+      events.push({ time: "", text: title, multiDay: true, suffix });
+      continue;
+    }
+
+    // Tomorrow's events — show as preview
+    if (startYMD === tomorrowYMD) {
+      events.push({ time: "Tomorrow", text: title, multiDay: false, preview: true });
+    }
   }
+
+  // Sort: multi-day first, then by time, then tomorrow previews last
+  events.sort((a,b) => {
+    if (a.preview && !b.preview) return 1;
+    if (!a.preview && b.preview) return -1;
+    if (a.multiDay && !b.multiDay) return -1;
+    if (!a.multiDay && b.multiDay) return 1;
+    return (a.time||"").localeCompare(b.time||"");
+  });
+
   return events;
 }
 
@@ -604,11 +733,31 @@ function renderCalEvents(events) {
     el.innerHTML = `<div id="cal-empty">Kim is home today.</div>`;
     return;
   }
-  el.innerHTML = events.map(e => `
-    <div class="cal-event">
-      <div class="cal-event-time">${e.time||"All day"}</div>
-      <div class="cal-event-text">${smartPrefix(e.text)}</div>
-    </div>`).join("");
+  el.innerHTML = events.map(e => {
+    if (e.multiDay) {
+      // Multi-day: show text + countdown suffix in light blue
+      return `
+        <div class="cal-event">
+          <div class="cal-event-text" style="flex:1">
+            ${smartPrefix(e.text)}
+            <span style="font-size:32px;color:#7dd8f0;font-weight:400"> · ${e.suffix}</span>
+          </div>
+        </div>`;
+    }
+    if (e.preview) {
+      // Tomorrow preview: slightly dimmer
+      return `
+        <div class="cal-event">
+          <div class="cal-event-time" style="color:#7dd8f0;font-size:30px">Tomorrow</div>
+          <div class="cal-event-text" style="color:#c8e8ff;font-size:34px">${smartPrefix(e.text)}</div>
+        </div>`;
+    }
+    return `
+      <div class="cal-event">
+        <div class="cal-event-time">${e.time||"All day"}</div>
+        <div class="cal-event-text">${smartPrefix(e.text)}</div>
+      </div>`;
+  }).join("");
 }
 
 /* ── Evening pill reminder ── */
@@ -801,6 +950,8 @@ let pillsGivenToday  = false;
 
 function showMorningPills() {
   if (pillsGivenToday) return;
+  const h = new Date().getHours();
+  if (h < 8 || h >= 13) return; // only show 8 AM to 1 PM
   document.getElementById("pill-overlay").classList.add("active");
 }
 
@@ -817,8 +968,9 @@ function scheduleMorningPills() {
   const pill = new Date();
   pill.setHours(8, 0, 0, 0);
   if (pill <= now) {
-    // Already past 8 AM — show immediately if pills not given
-    if (!pillsGivenToday) showMorningPills();
+    // Already past 8 AM — show if pills not given and before 1 PM
+    const h = now.getHours();
+    if (!pillsGivenToday && h >= 8 && h < 13) showMorningPills();
     return;
   }
   morningPillTimer = setTimeout(() => {
