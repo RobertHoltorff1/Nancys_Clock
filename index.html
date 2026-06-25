@@ -648,7 +648,9 @@ async function fetchCal() {
 
 function parseIcal(text) {
   if (!text) return [];
-  const today    = new Date();
+
+  const now      = new Date();
+  const today    = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const tomorrow = new Date(today); tomorrow.setDate(today.getDate()+1);
 
   function toYMD(d) {
@@ -657,69 +659,86 @@ function parseIcal(text) {
   const todayYMD    = toYMD(today);
   const tomorrowYMD = toYMD(tomorrow);
 
+  // Unfold iCal lines (lines can be wrapped with CRLF + space)
+  text = text.replace(/\r\n[ \t]/g, '').replace(/\r/g, '');
+
   const events = [];
   const blocks = text.split("BEGIN:VEVENT").slice(1);
 
   for (const b of blocks) {
-    const sum    = b.match(/SUMMARY[^:]*:([^\r\n]+)/);
+    const sum = b.match(/^SUMMARY[^:]*:(.+)$/m);
     if (!sum) continue;
-    const title  = sum[1].trim();
+    const title = sum[1].trim();
 
-    // Get start date
-    const dtStart = b.match(/DTSTART[^:]*:([^\r\n]+)/);
-    const dtEnd   = b.match(/DTEND[^:]*:([^\r\n]+)/);
-    if (!dtStart) continue;
+    const dtStartMatch = b.match(/^DTSTART([^:]*):(.+)$/m);
+    const dtEndMatch   = b.match(/^DTEND([^:]*):(.+)$/m);
+    if (!dtStartMatch) continue;
 
-    const startRaw = dtStart[1].trim();
-    const endRaw   = dtEnd ? dtEnd[1].trim() : "";
-    const startYMD = startRaw.slice(0,8);
-    const endYMD   = endRaw.slice(0,8);
+    const startParams = dtStartMatch[1]; // e.g. ;TZID=America/Chicago or ;VALUE=DATE
+    const startVal    = dtStartMatch[2].trim();
+    const endVal      = dtEndMatch ? dtEndMatch[2].trim() : "";
 
-    // Check if multi-day event spanning today
-    const isMultiDay = endRaw && endYMD > startYMD;
+    const startYMD = startVal.replace(/T.*/, '').replace(/-/g,'').slice(0,8);
+    const endYMD   = endVal.replace(/T.*/, '').replace(/-/g,'').slice(0,8);
+
+    // All-day events: DTSTART;VALUE=DATE:YYYYMMDD
+    const isAllDay = startParams.includes('VALUE=DATE') || !startVal.includes('T');
+
+    // Multi-day: end is more than 1 day after start
+    // Note: iCal all-day DTEND is exclusive (the day AFTER the last day)
+    const isMultiDay = endYMD && endYMD > (isAllDay
+      ? String(parseInt(startYMD)+1).padStart(8,'0')
+      : startYMD);
+
     const spansToday = isMultiDay && startYMD <= todayYMD && endYMD > todayYMD;
+    const startsToday = startYMD === todayYMD;
+    const startsTomorrow = startYMD === tomorrowYMD;
 
-    // Parse time if available
+    // Parse time for timed events
     let timeStr = "";
-    const tMatch = startRaw.match(/T(\d{2})(\d{2})/);
-    if (tMatch) {
+    const tMatch = startVal.match(/T(\d{2})(\d{2})/);
+    if (tMatch && !isAllDay) {
       let h = parseInt(tMatch[1]);
       const m = tMatch[2];
-      // Handle UTC — rough local offset adjustment
-      const offset = -today.getTimezoneOffset() / 60;
-      h = (h + offset + 24) % 24;
-      const h12 = h%12||12;
-      const ap  = h>=12?"PM":"AM";
+      // Convert UTC to local if ends in Z
+      if (startVal.endsWith('Z')) {
+        const offset = -now.getTimezoneOffset() / 60;
+        h = (h + offset + 24) % 24;
+      }
+      const h12 = h % 12 || 12;
+      const ap  = h >= 12 ? "PM" : "AM";
       timeStr = `${h12}:${m} ${ap}`;
     }
 
-    // Today's single-day events
-    if (startYMD === todayYMD && !isMultiDay) {
-      events.push({ time: timeStr, text: title, multiDay: false });
-      continue;
-    }
-
-    // Multi-day events spanning today
+    // Multi-day spanning today
     if (spansToday) {
-      // Calculate days remaining
-      const endDate  = new Date(
+      const endDate = new Date(
         parseInt(endYMD.slice(0,4)),
         parseInt(endYMD.slice(4,6))-1,
         parseInt(endYMD.slice(6,8))
       );
+      // For all-day events, end is exclusive so subtract 1 day
+      if (isAllDay) endDate.setDate(endDate.getDate()-1);
       const daysLeft = Math.ceil((endDate - today) / 86400000);
-      const suffix   = daysLeft === 1 ? "back tomorrow" : `back in ${daysLeft} days`;
+      const suffix = daysLeft <= 0 ? "back today"
+                   : daysLeft === 1 ? "back tomorrow"
+                   : `back in ${daysLeft} days`;
       events.push({ time: "", text: title, multiDay: true, suffix });
       continue;
     }
 
-    // Tomorrow's events — show as preview
-    if (startYMD === tomorrowYMD) {
-      events.push({ time: "Tomorrow", text: title, multiDay: false, preview: true });
+    // Today's events
+    if (startsToday) {
+      events.push({ time: timeStr || (isAllDay ? "" : ""), text: title, multiDay: false });
+      continue;
+    }
+
+    // Tomorrow preview
+    if (startsTomorrow) {
+      events.push({ time: "Tomorrow", text: title, preview: true, multiDay: false });
     }
   }
 
-  // Sort: multi-day first, then by time, then tomorrow previews last
   events.sort((a,b) => {
     if (a.preview && !b.preview) return 1;
     if (!a.preview && b.preview) return -1;
