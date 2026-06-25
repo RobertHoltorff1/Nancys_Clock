@@ -621,9 +621,13 @@ function showCalPlaceholder() {
 }
 
 async function fetchCal() {
-  const proxyUrl = `https://nancys-clock.vercel.app/api/proxy?url=${encodeURIComponent(S.calUrl)}`;
+  const cacheBust = Date.now();
+  const proxyUrl = `https://nancys-clock.vercel.app/api/proxy?cb=${cacheBust}&url=${encodeURIComponent(S.calUrl)}`;
   try {
-    const r = await fetch(proxyUrl, { signal: AbortSignal.timeout(10000) });
+    const r = await fetch(proxyUrl, { 
+      signal: AbortSignal.timeout(20000),
+      cache: 'no-store'
+    });
     if (!r.ok) throw new Error('Proxy returned ' + r.status);
     const text = await r.text();
     if (!text || !text.includes('BEGIN:VCALENDAR')) throw new Error('Invalid calendar data');
