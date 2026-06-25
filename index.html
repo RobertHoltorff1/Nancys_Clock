@@ -376,7 +376,7 @@ html, body {
   <div id="alarm-name">Nancy!</div>
   <div id="alarm-message">Time to take a bathroom break.</div>
   <div id="alarm-speaker"></div>
-  <button id="stop-btn" onclick="stopAlarm()">I'm on my way ✓</button>
+  <button id="stop-btn" onclick="stopAlarm()">Tap when heading to bathroom</button>
   <div id="snooze-badge"></div>
 </div>
 
@@ -385,7 +385,7 @@ html, body {
   <div id="pill-emoji">💊</div>
   <div id="pill-title">Good Morning!</div>
   <div id="pill-message">Time for Nancy's morning pills.</div>
-  <button id="pill-btn" onclick="pillsTaken()">Pills taken ✓</button>
+  <button id="pill-btn" onclick="pillsTaken()">Tap when pills are given</button>
 </div>
 
 <!-- SETTINGS BUTTON -->
@@ -627,22 +627,11 @@ async function fetchCal() {
     const text = await r.text();
     if (!text || !text.includes('BEGIN:VCALENDAR')) throw new Error('Invalid calendar data');
     const events = parseIcal(text);
-    // DEBUG: show raw info if no events found
-    if (events.length === 0) {
-      const today = new Date();
-      const lines = text.split('\n').filter(l => l.includes('DTSTART') || l.includes('SUMMARY') || l.includes('DTEND')).slice(0,12);
-      document.getElementById("cal-events").innerHTML =
-        `<div style="font-size:16px;color:#fff;word-break:break-all;line-height:1.8">
-          Today: ${today.toISOString().slice(0,10)}<br>
-          ${lines.map(l => l.trim().replace(/</g,'&lt;')).join('<br>')}
-        </div>`;
-      return;
-    }
     renderCalEvents(events);
     scheduleEveningPills(events);
   } catch(e) {
     document.getElementById("cal-events").innerHTML =
-      `<div id="cal-empty">Error: ${e.message}</div>`;
+      `<div id="cal-empty">Couldn't reach calendar right now.</div>`;
   }
 }
 
@@ -704,18 +693,17 @@ function parseIcal(text) {
       let displayYMD = startYMD;
 
       if (startVal.endsWith('Z')) {
-        // UTC — convert to local
-        const utcDate = new Date(
+        // UTC — convert to local using proper JS Date
+        const utcDate = new Date(Date.UTC(
           parseInt(startYMD.slice(0,4)),
           parseInt(startYMD.slice(4,6))-1,
           parseInt(startYMD.slice(6,8)),
           h,
           parseInt(tMatch[2])
-        );
-        // Adjust for UTC
-        const localDate = new Date(utcDate.getTime() - (utcDate.getTimezoneOffset() * 60000));
-        displayH = localDate.getUTCHours();
-        displayYMD = toYMD(localDate);
+        ));
+        displayH = utcDate.getHours();
+        const mins = utcDate.getMinutes();
+        displayYMD = toYMD(utcDate);
       }
       // If TZID present, time is already local — use as-is
       const h12 = displayH % 12 || 12;
@@ -772,7 +760,14 @@ const PASSTHROUGH = ['dinner','lunch','breakfast','💊','pill','supper','tonigh
 
 function smartPrefix(text) {
   const lower = text.toLowerCase();
+  // Pass through food/pill events
   if (PASSTHROUGH.some(k => lower.startsWith(k))) return text;
+  // If title already mentions Kim, don't double up
+  if (lower.startsWith('kim ') || lower.startsWith("kim's ")) {
+    // Clean up "Kim goes fishing" -> "Kim is fishing" if needed
+    // Just return as-is with capital K
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  }
   return 'Kim is at ' + text;
 }
 
