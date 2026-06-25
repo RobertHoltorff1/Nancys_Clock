@@ -643,6 +643,14 @@ async function fetchCal() {
       const text = await parseResp(r);
       if (!text || !text.includes('BEGIN:VCALENDAR')) continue;
       const events = parseIcal(text);
+      // DEBUG — show raw first event data
+      const blocks = text.split('BEGIN:VEVENT').slice(1);
+      const debugEl = document.getElementById("cal-events");
+      if (events.length === 0 && blocks.length > 0) {
+        const firstBlock = blocks[0].slice(0, 400);
+        debugEl.innerHTML = `<div style="font-size:18px;color:#fff;word-break:break-all;line-height:1.6">${firstBlock.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>`;
+        return;
+      }
       renderCalEvents(events);
       scheduleEveningPills(events);
       return;
