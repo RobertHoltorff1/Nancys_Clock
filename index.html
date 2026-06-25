@@ -620,17 +620,30 @@ function showCalPlaceholder() {
 }
 
 async function fetchCal() {
-  try {
-    const url = `https://api.allorigins.win/get?url=${encodeURIComponent(S.calUrl)}`;
-    const r   = await fetch(url);
-    const d   = await r.json();
-    const events = parseIcal(d.contents);
-    renderCalEvents(events);
-    scheduleEveningPills(events);
-  } catch(e) {
-    document.getElementById("cal-events").innerHTML =
-      `<div id="cal-empty" style="font-size:26px;color:var(--text2)">Couldn't reach calendar right now.</div>`;
+  const proxies = [
+    url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+    url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  ];
+
+  for (const proxy of proxies) {
+    try {
+      const r = await fetch(proxy(S.calUrl), { signal: AbortSignal.timeout(8000) });
+      if (!r.ok) continue;
+      const text = proxy === proxies[0]
+        ? (await r.json()).contents
+        : await r.text();
+      if (!text) continue;
+      const events = parseIcal(text);
+      renderCalEvents(events);
+      scheduleEveningPills(events);
+      return; // success — stop trying
+    } catch(e) {
+      continue; // try next proxy
+    }
   }
+  // All proxies failed
+  document.getElementById("cal-events").innerHTML =
+    `<div id="cal-empty">Calendar unavailable — will retry shortly.</div>`;
 }
 
 function parseIcal(text) {
