@@ -643,14 +643,6 @@ async function fetchCal() {
       const text = await parseResp(r);
       if (!text || !text.includes('BEGIN:VCALENDAR')) continue;
       const events = parseIcal(text);
-      // DEBUG — show raw first event data
-      const blocks = text.split('BEGIN:VEVENT').slice(1);
-      const debugEl = document.getElementById("cal-events");
-      if (events.length === 0 && blocks.length > 0) {
-        const firstBlock = blocks[0].slice(0, 400);
-        debugEl.innerHTML = `<div style="font-size:18px;color:#fff;word-break:break-all;line-height:1.6">${firstBlock.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>`;
-        return;
-      }
       renderCalEvents(events);
       scheduleEveningPills(events);
       return;
@@ -716,14 +708,31 @@ function parseIcal(text) {
     if (tMatch && !isAllDay) {
       let h = parseInt(tMatch[1]);
       const m = tMatch[2];
-      // Convert UTC to local if ends in Z
+      let displayH = h;
+      let displayYMD = startYMD;
+
       if (startVal.endsWith('Z')) {
-        const offset = -now.getTimezoneOffset() / 60;
-        h = (h + offset + 24) % 24;
+        // UTC — convert to local
+        const utcDate = new Date(
+          parseInt(startYMD.slice(0,4)),
+          parseInt(startYMD.slice(4,6))-1,
+          parseInt(startYMD.slice(6,8)),
+          h,
+          parseInt(tMatch[2])
+        );
+        // Adjust for UTC
+        const localDate = new Date(utcDate.getTime() - (utcDate.getTimezoneOffset() * 60000));
+        displayH = localDate.getUTCHours();
+        displayYMD = toYMD(localDate);
       }
-      const h12 = h % 12 || 12;
-      const ap  = h >= 12 ? "PM" : "AM";
+      // If TZID present, time is already local — use as-is
+      const h12 = displayH % 12 || 12;
+      const ap  = displayH >= 12 ? "PM" : "AM";
       timeStr = `${h12}:${m} ${ap}`;
+      // Update startYMD if UTC conversion changed the date
+      if (displayYMD !== startYMD) {
+        startYMD = displayYMD;
+      }
     }
 
     // Multi-day spanning today
