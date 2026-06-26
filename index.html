@@ -117,6 +117,7 @@ html, body {
   border-bottom: 2px solid rgba(255,255,255,0.25);
   padding-bottom: 12px;
   margin-bottom: 4px;
+  text-align: center;
 }
 
 #cal-events {
@@ -157,14 +158,14 @@ html, body {
 /* ── BOTTOM: NEXT REMINDER ── */
 #next-bar {
   background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: 20px;
+  border: 3px solid rgba(255,255,255,0.5);
+  border-radius: 24px;
   display:flex;
   flex-direction: column;
   align-items:center;
   justify-content:center;
   gap:2px;
-  padding: 18px 12px;
+  padding: 20px 16px;
   margin-top: auto;
   width: 100%;
 }
@@ -179,8 +180,8 @@ html, body {
   padding: 0 12px;
 }
 
-#next-label { font-size:54px; color:#ffffff; font-weight:700; white-space:nowrap; text-transform:uppercase; letter-spacing:1px; }
-#next-time  { font-size:54px; color:#7dd8f0; font-weight:800; white-space:nowrap; }
+#next-label { font-size:60px; color:#ffffff; font-weight:800; white-space:nowrap; text-transform:uppercase; letter-spacing:1px; }
+#next-time  { font-size:60px; color:#7dd8f0; font-weight:800; white-space:nowrap; }
 #next-countdown { font-size:54px; color:#7dd8f0; font-weight:600; letter-spacing:0.5px; text-align:center; width:100%; }
 
 /* ══ PILL OVERLAY ═════════════════════════════════════════════ */
@@ -729,10 +730,15 @@ function parseIcal(text) {
     }
 
     // NOW do date checks with corrected startYMD
-    // Multi-day: end is more than 1 day after start
-    const isMultiDay = endYMD && endYMD > (isAllDay
-      ? String(parseInt(startYMD)+1).padStart(8,'0')
-      : startYMD);
+    // Multi-day ONLY for all-day events spanning multiple calendar days.
+    // A timed event (has a time) is never treated as multi-day even if it
+    // crosses midnight, so dinners/appointments show with their time.
+    let isMultiDay = false;
+    if (isAllDay && endYMD) {
+      // all-day DTEND is exclusive; multi-day if it spans 2+ days
+      const dayAfterStart = String(parseInt(startYMD)+1).padStart(8,'0');
+      isMultiDay = endYMD > dayAfterStart;
+    }
 
     const spansToday = isMultiDay && startYMD <= todayYMD && endYMD > todayYMD;
     const startsToday = startYMD === todayYMD;
