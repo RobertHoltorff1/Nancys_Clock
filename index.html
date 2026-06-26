@@ -681,7 +681,7 @@ function parseIcal(text) {
     const startVal    = dtStartMatch[2].trim();
     const endVal      = dtEndMatch ? dtEndMatch[2].trim() : "";
 
-    const startYMD = startVal.replace(/T.*/, '').replace(/-/g,'').slice(0,8);
+    let startYMD = startVal.replace(/T.*/, '').replace(/-/g,'').slice(0,8);
     const endYMD   = endVal.replace(/T.*/, '').replace(/-/g,'').slice(0,8);
 
     // All-day events: DTSTART;VALUE=DATE:YYYYMMDD
