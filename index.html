@@ -135,8 +135,8 @@ html, body {
 
 .cal-event-time {
   font-size: 50px;
-  font-weight: 600;
-  color: #d6f5ec;
+  font-weight: 800;
+  color: #dcf1ff;
   min-width: 176px;
   line-height: 1.1;
   flex-shrink: 0;
@@ -162,27 +162,25 @@ html, body {
   border: 3px solid rgba(255,255,255,0.5);
   border-radius: 24px;
   display:flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items:center;
-  justify-content:center;
-  gap:2px;
-  padding: 20px 16px;
+  justify-content:space-between;
+  gap:20px;
+  padding: 16px 32px;
   margin-top: auto;
   width: 100%;
 }
 
-#next-row1 {
+#next-right {
   display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:24px;
-  flex-wrap: nowrap;
-  width: 100%;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:0;
 }
 
-#next-label { font-size:60px; color:#ffffff; font-weight:800; white-space:nowrap; text-transform:uppercase; letter-spacing:1px; }
-#next-time  { font-size:60px; color:#f6fcff; font-weight:800; white-space:nowrap; }
-#next-countdown { font-size:58px; color:#f6fcff; font-weight:800; letter-spacing:2px; text-align:center; width:100%; font-variant-numeric: tabular-nums; }
+#next-label { font-size:58px; color:#dcf1ff; font-weight:800; white-space:nowrap; text-transform:uppercase; letter-spacing:1px; }
+#next-time  { font-size:58px; color:#dcf1ff; font-weight:800; white-space:nowrap; line-height:1.05; }
+#next-countdown { font-size:54px; color:#dcf1ff; font-weight:800; letter-spacing:2px; text-align:right; font-variant-numeric: tabular-nums; line-height:1.05; }
 
 /* ══ PILL OVERLAY ═════════════════════════════════════════════ */
 #pill-overlay {
@@ -379,11 +377,11 @@ html, body {
 
   <!-- NEXT REMINDER BOTTOM -->
   <div id="next-bar">
-    <div id="next-row1">
-      <span id="next-label">Next pee break</span>
+    <span id="next-label">Next pee break</span>
+    <div id="next-right">
       <span id="next-time">—</span>
+      <div id="next-countdown"></div>
     </div>
-    <div id="next-countdown"></div>
   </div>
 
 </div>
