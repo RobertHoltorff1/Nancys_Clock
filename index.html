@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://nancys-clock.vercel.app https://*.github.io; connect-src *;">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Nancy's Clock</title>
 <style>
@@ -623,7 +622,7 @@ function showCalPlaceholder() {
 
 async function fetchCal() {
   const cacheBust = Date.now();
-  const proxyUrl = `https://nancys-clock.vercel.app/api/proxy?cb=${cacheBust}&url=${encodeURIComponent(S.calUrl)}`;
+  const proxyUrl = `/api/proxy?cb=${cacheBust}&url=${encodeURIComponent(S.calUrl)}`;
   const calEl = document.getElementById("cal-events");
   calEl.innerHTML = '<div id="cal-empty" style="font-size:20px">Fetching...</div>';
   try {
