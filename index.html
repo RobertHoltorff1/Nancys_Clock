@@ -49,6 +49,10 @@ html, body {
   align-items:center;
   gap:0;
   cursor:pointer;
+  border: 3px solid rgba(255,255,255,0.5);
+  border-radius: 24px;
+  padding: 18px 20px;
+  width: 100%;
 }
 
 #time-row {
@@ -110,6 +114,9 @@ html, body {
   text-transform: uppercase;
   letter-spacing: 3px;
   color: #a8f0dc;
+  border-bottom: 2px solid rgba(255,255,255,0.25);
+  padding-bottom: 12px;
+  margin-bottom: 4px;
 }
 
 #cal-events {
@@ -125,10 +132,10 @@ html, body {
 }
 
 .cal-event-time {
-  font-size: 42px;
-  font-weight: 500;
+  font-size: 48px;
+  font-weight: 600;
   color: var(--accent);
-  min-width: 150px;
+  min-width: 170px;
   line-height: 1.1;
   flex-shrink: 0;
 }
@@ -172,9 +179,9 @@ html, body {
   padding: 0 12px;
 }
 
-#next-label { font-size:58px; color:#ffffff; font-weight:700; white-space:nowrap; text-transform:uppercase; letter-spacing:1px; }
-#next-time  { font-size:58px; color:#7dd8f0; font-weight:800; white-space:nowrap; }
-#next-countdown { font-size:60px; color:#7dd8f0; font-weight:600; letter-spacing:0.5px; text-align:center; width:100%; }
+#next-label { font-size:54px; color:#ffffff; font-weight:700; white-space:nowrap; text-transform:uppercase; letter-spacing:1px; }
+#next-time  { font-size:54px; color:#7dd8f0; font-weight:800; white-space:nowrap; }
+#next-countdown { font-size:54px; color:#7dd8f0; font-weight:600; letter-spacing:0.5px; text-align:center; width:100%; }
 
 /* ══ PILL OVERLAY ═════════════════════════════════════════════ */
 #pill-overlay {
@@ -372,7 +379,7 @@ html, body {
   <!-- NEXT REMINDER BOTTOM -->
   <div id="next-bar">
     <div id="next-row1">
-      <span id="next-label">Next bathroom break</span>
+      <span id="next-label">Next pee break</span>
       <span id="next-time">—</span>
     </div>
     <div id="next-countdown"></div>
@@ -829,7 +836,7 @@ function renderCalEvents(events) {
           <div class="cal-event-time">All day</div>
           <div class="cal-event-text" style="flex:1">
             ${smartPrefix(e.text)}
-            <span style="font-size:32px;color:#7dd8f0;font-weight:400"> · ${e.suffix}</span>
+            <span style="font-size:44px;color:#7dd8f0;font-weight:700"> · ${e.suffix}</span>
           </div>
         </div>`;
     }
