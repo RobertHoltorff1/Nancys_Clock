@@ -63,7 +63,7 @@ html, body {
 }
 
 #time-display {
-  font-size: 118px;
+  font-size: 104px;
   font-weight: 700;
   letter-spacing: -3px;
   line-height: 1;
@@ -79,10 +79,10 @@ html, body {
 }
 
 #date-display {
-  font-size: 46px;
+  font-size: 54px;
   font-weight: 700;
   color: #ffffff;
-  margin-top: 6px;
+  margin-top: 8px;
   letter-spacing: 0.5px;
 }
 
@@ -703,8 +703,33 @@ function parseIcal(text) {
     // All-day events: DTSTART;VALUE=DATE:YYYYMMDD
     const isAllDay = startParams.includes('VALUE=DATE') || !startVal.includes('T');
 
+    // Parse time FIRST and correct the date for UTC events BEFORE any date checks
+    let timeStr = "";
+    const tMatch = startVal.match(/T(\d{2})(\d{2})/);
+    if (tMatch && !isAllDay) {
+      let h = parseInt(tMatch[1]);
+      const m = tMatch[2];
+      let displayH = h;
+
+      if (startVal.endsWith('Z')) {
+        // UTC — convert both time AND date to local
+        const utcDate = new Date(Date.UTC(
+          parseInt(startYMD.slice(0,4)),
+          parseInt(startYMD.slice(4,6))-1,
+          parseInt(startYMD.slice(6,8)),
+          h,
+          parseInt(m)
+        ));
+        displayH = utcDate.getHours();
+        startYMD = toYMD(utcDate);  // correct the date NOW
+      }
+      const h12 = displayH % 12 || 12;
+      const ap  = displayH >= 12 ? "PM" : "AM";
+      timeStr = `${h12}:${m} ${ap}`;
+    }
+
+    // NOW do date checks with corrected startYMD
     // Multi-day: end is more than 1 day after start
-    // Note: iCal all-day DTEND is exclusive (the day AFTER the last day)
     const isMultiDay = endYMD && endYMD > (isAllDay
       ? String(parseInt(startYMD)+1).padStart(8,'0')
       : startYMD);
@@ -712,38 +737,6 @@ function parseIcal(text) {
     const spansToday = isMultiDay && startYMD <= todayYMD && endYMD > todayYMD;
     const startsToday = startYMD === todayYMD;
     const startsTomorrow = startYMD === tomorrowYMD;
-
-    // Parse time for timed events
-    let timeStr = "";
-    const tMatch = startVal.match(/T(\d{2})(\d{2})/);
-    if (tMatch && !isAllDay) {
-      let h = parseInt(tMatch[1]);
-      const m = tMatch[2];
-      let displayH = h;
-      let displayYMD = startYMD;
-
-      if (startVal.endsWith('Z')) {
-        // UTC — convert to local using proper JS Date
-        const utcDate = new Date(Date.UTC(
-          parseInt(startYMD.slice(0,4)),
-          parseInt(startYMD.slice(4,6))-1,
-          parseInt(startYMD.slice(6,8)),
-          h,
-          parseInt(tMatch[2])
-        ));
-        displayH = utcDate.getHours();
-        const mins = utcDate.getMinutes();
-        displayYMD = toYMD(utcDate);
-      }
-      // If TZID present, time is already local — use as-is
-      const h12 = displayH % 12 || 12;
-      const ap  = displayH >= 12 ? "PM" : "AM";
-      timeStr = `${h12}:${m} ${ap}`;
-      // Update startYMD if UTC conversion changed the date
-      if (displayYMD !== startYMD) {
-        startYMD = displayYMD;
-      }
-    }
 
     // Multi-day spanning today
     if (spansToday) {
