@@ -166,7 +166,7 @@ html, body {
   align-items:center;
   justify-content:space-between;
   gap:20px;
-  padding: 16px 32px;
+  padding: 16px 44px 16px 32px;
   margin-top: auto;
   width: 100%;
 }
@@ -560,7 +560,7 @@ function updateNextBar() {
     const mins = Math.floor((totalSec % 3600) / 60);
     const secs = totalSec % 60;
     const pad  = n => String(n).padStart(2,"0");
-    countdownEl.textContent = `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+    countdownEl.textContent = `${hrs}:${pad(mins)}:${pad(secs)}`;
   } else {
     countdownEl.textContent = "any moment now";
   }
