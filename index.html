@@ -623,23 +623,27 @@ function showCalPlaceholder() {
 async function fetchCal() {
   const cacheBust = Date.now();
   const proxyUrl = `https://nancys-clock.vercel.app/api/proxy?cb=${cacheBust}&url=${encodeURIComponent(S.calUrl)}`;
+  const calEl = document.getElementById("cal-events");
+  calEl.innerHTML = '<div id="cal-empty" style="font-size:20px">Fetching...</div>';
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 20000);
-    const r = await fetch(proxyUrl, { 
-      signal: controller.signal,
-      cache: 'no-store'
-    });
+    let r;
+    try {
+      r = await fetch(proxyUrl, { cache: 'no-store' });
+    } catch(fetchErr) {
+      clearTimeout(timeoutId);
+      throw new Error('Fetch failed: ' + fetchErr.message);
+    }
     clearTimeout(timeoutId);
-    if (!r.ok) throw new Error('Proxy returned ' + r.status);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
     const text = await r.text();
-    if (!text || !text.includes('BEGIN:VCALENDAR')) throw new Error('Invalid calendar data');
+    if (!text || !text.includes('BEGIN:VCALENDAR')) throw new Error('Bad data: ' + text.slice(0,50));
     const events = parseIcal(text);
     renderCalEvents(events);
     scheduleEveningPills(events);
   } catch(e) {
-    document.getElementById("cal-events").innerHTML =
-      `<div id="cal-empty">Couldn't reach calendar right now.</div>`;
+    calEl.innerHTML = `<div id="cal-empty" style="font-size:20px">ERR: ${e.message}</div>`;
   }
 }
 
