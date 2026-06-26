@@ -134,10 +134,10 @@ html, body {
 }
 
 .cal-event-time {
-  font-size: 46px;
+  font-size: 50px;
   font-weight: 600;
-  color: var(--accent);
-  min-width: 168px;
+  color: #d6f5ec;
+  min-width: 176px;
   line-height: 1.1;
   flex-shrink: 0;
 }
@@ -181,8 +181,8 @@ html, body {
 }
 
 #next-label { font-size:60px; color:#ffffff; font-weight:800; white-space:nowrap; text-transform:uppercase; letter-spacing:1px; }
-#next-time  { font-size:60px; color:#7dd8f0; font-weight:800; white-space:nowrap; }
-#next-countdown { font-size:54px; color:#7dd8f0; font-weight:600; letter-spacing:0.5px; text-align:center; width:100%; }
+#next-time  { font-size:60px; color:#e6f6ff; font-weight:800; white-space:nowrap; }
+#next-countdown { font-size:58px; color:#e6f6ff; font-weight:700; letter-spacing:2px; text-align:center; width:100%; font-variant-numeric: tabular-nums; }
 
 /* ══ PILL OVERLAY ═════════════════════════════════════════════ */
 #pill-overlay {
@@ -554,21 +554,17 @@ function updateNextBar() {
   const mm   = String(t.getMinutes()).padStart(2,"0");
   timeEl.textContent = `${h12}:${mm} ${ampm}`;
 
-  // Countdown
+  // Live countdown HH:MM:SS — ticks every second
   const diff = S.nextAlarmAt - Date.now();
   if (diff > 0) {
-    const totalMin = Math.floor(diff / 60000);
-    const hrs      = Math.floor(totalMin / 60);
-    const mins     = totalMin % 60;
-    if (hrs > 0) {
-      countdownEl.textContent = `in ${hrs} hr ${mins} min`;
-    } else if (mins > 0) {
-      countdownEl.textContent = `in ${mins} min`;
-    } else {
-      countdownEl.textContent = `any moment now`;
-    }
+    const totalSec = Math.floor(diff / 1000);
+    const hrs  = Math.floor(totalSec / 3600);
+    const mins = Math.floor((totalSec % 3600) / 60);
+    const secs = totalSec % 60;
+    const pad  = n => String(n).padStart(2,"0");
+    countdownEl.textContent = `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
   } else {
-    countdownEl.textContent = "";
+    countdownEl.textContent = "any moment now";
   }
 
   // Show quiet hours message if in quiet window
@@ -835,7 +831,7 @@ function renderCalEvents(events) {
           <div class="cal-event-time">All day</div>
           <div class="cal-event-text" style="flex:1">
             ${smartPrefix(e.text)}
-            <div style="font-size:44px;color:#7dd8f0;font-weight:700;line-height:1.05;margin-top:2px">(${e.suffix})</div>
+            <div style="font-size:44px;color:#5bb8ff;font-weight:700;line-height:1.05;margin-top:2px">(${e.suffix})</div>
           </div>
         </div>`;
     }
