@@ -106,15 +106,18 @@ html, body {
 }
 
 #cal-header {
-  font-size: 56px;
+  font-size: 52px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 3px;
-  color: #a8f0dc;
-  border-bottom: 2px solid rgba(255,255,255,0.25);
-  padding-bottom: 8px;
-  margin-bottom: 2px;
+  letter-spacing: 2px;
+  color: #e8f4ff;
+  background: #1b3a5c;
+  border: 2px solid #3d7bbf;
+  border-radius: 16px;
+  padding: 10px 24px;
+  margin: 0 auto 6px;
   text-align: center;
+  align-self: center;
 }
 
 #cal-events {
@@ -367,7 +370,7 @@ html, body {
 
   <!-- CALENDAR MIDDLE -->
   <div id="calendar-block">
-    <div id="cal-header">Today's Schedule</div>
+    <div id="cal-header">Today's Schedule:</div>
     <div id="cal-events">
       <div id="cal-empty">Loading…</div>
     </div>
@@ -856,44 +859,58 @@ function renderCalEvents(events) {
 /* ── Evening pill reminder ── */
 let eveningPillTimer = null;
 
+let eveningPillsGiven = false;
+
+function timeStrToMins(timeStr) {
+  // "7:30 PM" -> minutes since midnight
+  const m = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+  if (!m) return null;
+  let h = parseInt(m[1]);
+  const min = parseInt(m[2]);
+  const pm = /PM/i.test(m[3]);
+  if (pm && h !== 12) h += 12;
+  if (!pm && h === 12) h = 0;
+  return h * 60 + min;
+}
+
 function scheduleEveningPills(events) {
   clearTimeout(eveningPillTimer);
   const now = new Date();
 
-  // Find dinner event
-  let dinnerMins = 18 * 60; // default 6 PM
-  const dinnerKeywords = ['dinner','supper','tonight'];
+  // Find the evening meal: a timed event between 4:00 PM and 8:30 PM today.
+  // Whatever the meal is called (chicken caesar, butter noodles, dinner...),
+  // the latest such event is treated as dinner.
+  let dinnerMins = 18 * 60; // default 6:00 PM if no evening meal found
+  let foundMeal = false;
   for (const e of events) {
-    if (e.time && dinnerKeywords.some(k => e.text.toLowerCase().startsWith(k))) {
-      const [rawH, rawM] = e.time.replace(/[APM]/g,'').trim().split(':').map(Number);
-      const isPM = e.time.includes('PM');
-      const h24 = isPM && rawH !== 12 ? rawH + 12 : (!isPM && rawH === 12 ? 0 : rawH);
-      dinnerMins = h24 * 60 + rawM;
-      break;
+    if (e.time && !e.preview && !e.multiDay) {
+      const mins = timeStrToMins(e.time);
+      if (mins !== null && mins >= 16*60 && mins <= 20.5*60) {
+        dinnerMins = mins;
+        foundMeal = true;
+      }
     }
   }
 
-  const pillMins = dinnerMins - 5;
+  const pillMins = dinnerMins - 5;       // 5 minutes before the meal
   const nowMins  = now.getHours() * 60 + now.getMinutes();
   const delay    = (pillMins - nowMins) * 60 * 1000;
 
   if (delay > 0) {
     eveningPillTimer = setTimeout(() => {
-      showEveningPills();
+      if (!eveningPillsGiven) showEveningPills();
     }, delay);
   }
 }
 
 function showEveningPills() {
-  // Show a gentle non-intrusive banner at bottom for 2 minutes
-  const bar = document.getElementById("next-bar");
-  const orig = bar.innerHTML;
-  bar.innerHTML = `<span style="font-size:34px;color:#ffffff">💊 Time for Nancy's evening pills — dinner is almost ready!</span>`;
-  bar.style.background = 'var(--accentd)';
-  setTimeout(() => {
-    bar.innerHTML = orig;
-    bar.style.background = '';
-  }, 2 * 60 * 1000);
+  if (eveningPillsGiven) return;
+  document.getElementById("pill-emoji").textContent = "💊";
+  document.getElementById("pill-title").textContent = "Evening Pills";
+  document.getElementById("pill-message").textContent =
+    "Time for Nancy's evening pills — dinner is almost ready!";
+  // Reuse the pill overlay but mark it as the evening one
+  document.getElementById("pill-overlay").classList.add("active", "evening");
 }
 
 /* ══ ALARM LOGIC ══════════════════════════════════════════════
@@ -1049,10 +1066,17 @@ function showMorningPills() {
 }
 
 function pillsTaken() {
-  pillsGivenToday = true;
-  document.getElementById("pill-overlay").classList.remove("active");
-  // Start the bathroom countdown from right now
-  resetAlarmTimer();
+  const overlay = document.getElementById("pill-overlay");
+  const isEvening = overlay.classList.contains("evening");
+  overlay.classList.remove("active", "evening");
+  if (isEvening) {
+    // Evening pills — just dismiss, don't reset the bathroom timer
+    eveningPillsGiven = true;
+  } else {
+    // Morning pills — start the bathroom countdown from right now
+    pillsGivenToday = true;
+    resetAlarmTimer();
+  }
 }
 
 function scheduleMorningPills() {
@@ -1078,6 +1102,7 @@ function scheduleMidnightReset() {
   next.setHours(24, 0, 0, 0);
   setTimeout(() => {
     pillsGivenToday = false;
+    eveningPillsGiven = false;
     scheduleMorningPills();
     scheduleMidnightReset();
   }, next - now);
