@@ -51,8 +51,15 @@ html, body {
   cursor:pointer;
 }
 
+#time-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 16px;
+}
+
 #time-display {
-  font-size: 130px;
+  font-size: 118px;
   font-weight: 700;
   letter-spacing: -3px;
   line-height: 1;
@@ -61,18 +68,17 @@ html, body {
 }
 
 #ampm-display {
-  font-size: 42px;
+  font-size: 56px;
   font-weight: 700;
   color: var(--accent);
-  letter-spacing: 5px;
-  margin-top: -4px;
+  letter-spacing: 2px;
 }
 
 #date-display {
-  font-size: 38px;
+  font-size: 46px;
   font-weight: 700;
   color: #ffffff;
-  margin-top: 4px;
+  margin-top: 6px;
   letter-spacing: 0.5px;
 }
 
@@ -99,8 +105,8 @@ html, body {
 }
 
 #cal-header {
-  font-size: 46px;
-  font-weight: 700;
+  font-size: 56px;
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 3px;
   color: #a8f0dc;
@@ -119,24 +125,24 @@ html, body {
 }
 
 .cal-event-time {
-  font-size: 36px;
-  font-weight: 400;
+  font-size: 42px;
+  font-weight: 500;
   color: var(--accent);
-  min-width: 130px;
+  min-width: 150px;
   line-height: 1.1;
   flex-shrink: 0;
 }
 
 .cal-event-text {
-  font-size: 48px;
-  font-weight: 500;
+  font-size: 54px;
+  font-weight: 700;
   color: #ffffff;
   line-height: 1.2;
 }
 
 #cal-empty {
-  font-size: 46px;
-  font-weight: 500;
+  font-size: 52px;
+  font-weight: 700;
   color: #ffffff;
   line-height: 1.4;
 }
@@ -165,9 +171,9 @@ html, body {
   width: 100%;
 }
 
-#next-label { font-size:52px; color:#ffffff; font-weight:600; white-space:nowrap; }
-#next-time  { font-size:52px; color:#ffffff; font-weight:800; white-space:nowrap; }
-#next-countdown { font-size:54px; color:#7dd8f0; font-weight:600; letter-spacing:0.5px; text-align:center; width:100%; }
+#next-label { font-size:58px; color:#ffffff; font-weight:700; white-space:nowrap; text-transform:uppercase; letter-spacing:1px; }
+#next-time  { font-size:58px; color:#7dd8f0; font-weight:800; white-space:nowrap; }
+#next-countdown { font-size:60px; color:#7dd8f0; font-weight:600; letter-spacing:0.5px; text-align:center; width:100%; }
 
 /* ══ PILL OVERLAY ═════════════════════════════════════════════ */
 #pill-overlay {
@@ -344,8 +350,10 @@ html, body {
 
   <!-- CLOCK TOP -->
   <div id="clock-block" onclick="handleClockTap()">
-    <div id="time-display">12:00</div>
-    <div id="ampm-display">PM</div>
+    <div id="time-row">
+      <div id="time-display">12:00</div>
+      <div id="ampm-display">PM</div>
+    </div>
     <div id="date-display">Saturday, June 20</div>
   </div>
 
@@ -814,9 +822,10 @@ function renderCalEvents(events) {
   }
   el.innerHTML = events.map(e => {
     if (e.multiDay) {
-      // Multi-day: show text + countdown suffix in light blue
+      // Multi-day: show "All day" label + text + countdown suffix
       return `
         <div class="cal-event">
+          <div class="cal-event-time">All day</div>
           <div class="cal-event-text" style="flex:1">
             ${smartPrefix(e.text)}
             <span style="font-size:32px;color:#7dd8f0;font-weight:400"> · ${e.suffix}</span>
