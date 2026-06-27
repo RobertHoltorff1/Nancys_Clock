@@ -228,6 +228,20 @@ html, body {
 }
 #pill-btn:active { background:var(--accent); color:#000; }
 
+#pill-silence-btn {
+  background:transparent;
+  border:2px solid var(--border);
+  border-radius:40px;
+  color:var(--text2);
+  font-size:26px;
+  font-weight:400;
+  padding:16px 36px;
+  cursor:pointer;
+  margin-bottom:-8px;
+}
+#pill-silence-btn:active { background:var(--bg3); color:var(--text); }
+#pill-silence-btn.silenced { color:var(--accent); border-color:var(--accentd); }
+
 /* ══ ALARM OVERLAY ════════════════════════════════════════════ */
 #alarm-overlay {
   display:none;
@@ -401,6 +415,7 @@ html, body {
   <div id="pill-emoji">💊</div>
   <div id="pill-title">Good Morning!</div>
   <div id="pill-message">Time for Nancy's morning pills.</div>
+  <button id="pill-silence-btn" onclick="silencePillGong()">🔕 Silence reminder for this task</button>
   <button id="pill-btn" onclick="pillsTaken()">Tap when all pills are swallowed</button>
 </div>
 
@@ -911,7 +926,10 @@ function showEveningPills() {
   document.getElementById("pill-message").textContent =
     "Time for Nancy's evening pills — dinner is almost ready!";
   // Reuse the pill overlay but mark it as the evening one
-  document.getElementById("pill-overlay").classList.add("active", "evening");
+  const overlay = document.getElementById("pill-overlay");
+  const wasActive = overlay.classList.contains("active");
+  overlay.classList.add("active", "evening");
+  if (!wasActive && !pillGongSilenced) startPillGong();
 }
 
 /* ══ ALARM LOGIC ══════════════════════════════════════════════
@@ -1020,6 +1038,51 @@ function playChime() {
   } catch(e){}
 }
 
+/* ── Gentle recurring gong for the pill overlay ──
+   A soft, low, barely-audible single tone every 5 minutes until tapped.
+   Uses its own short-lived audio context so it never clashes with the
+   pee-break alarm sound. */
+let pillChimeInterval = null;
+
+function playGentleGong() {
+  try {
+    const ctx  = new (window.AudioContext || window.webkitAudioContext)();
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = "sine";
+    osc.frequency.value = 196.00; // low G — soft and warm
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.07, ctx.currentTime + 0.12); // quiet peak
+    gain.gain.exponentialRampToValueAtTime(0.0008, ctx.currentTime + 2.6);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 2.7);
+    setTimeout(() => { try { ctx.close(); } catch(e){} }, 3200);
+  } catch(e){}
+}
+
+function startPillGong() {
+  stopPillGong();
+  playGentleGong();
+  pillChimeInterval = setInterval(playGentleGong, 5 * 60 * 1000); // every 5 min
+}
+
+function stopPillGong() {
+  clearInterval(pillChimeInterval);
+  pillChimeInterval = null;
+}
+
+let pillGongSilenced = false;
+
+function silencePillGong() {
+  // Stop the gong but keep the reminder on screen so it still works
+  pillGongSilenced = true;
+  stopPillGong();
+  const btn = document.getElementById("pill-silence-btn");
+  if (btn) { btn.textContent = "🔕 Reminder silenced"; btn.classList.add("silenced"); }
+}
+
 /* ══ ADMIN ════════════════════════════════════════════════════ */
 function openAdmin() {
   document.getElementById("s-name").value   = S.name;
@@ -1063,13 +1126,24 @@ function showMorningPills() {
   if (pillsGivenToday) return;
   const h = new Date().getHours();
   if (h < 8 || h >= 13) return; // only show 8 AM to 1 PM
-  document.getElementById("pill-overlay").classList.add("active");
+  const overlay = document.getElementById("pill-overlay");
+  const wasActive = overlay.classList.contains("active");
+  document.getElementById("pill-emoji").textContent = "💊";
+  document.getElementById("pill-title").textContent = "Good Morning!";
+  document.getElementById("pill-message").textContent =
+    "Good morning, Nancy — time for your pills.";
+  overlay.classList.add("active");
+  if (!wasActive && !pillGongSilenced) startPillGong(); // gentle gong, repeats every 5 min
 }
 
 function pillsTaken() {
   const overlay = document.getElementById("pill-overlay");
   const isEvening = overlay.classList.contains("evening");
   overlay.classList.remove("active", "evening");
+  stopPillGong();
+  pillGongSilenced = false;
+  const sbtn = document.getElementById("pill-silence-btn");
+  if (sbtn) { sbtn.textContent = "🔕 Silence reminder for this task"; sbtn.classList.remove("silenced"); }
   if (isEvening) {
     // Evening pills — just dismiss, don't reset the bathroom timer
     eveningPillsGiven = true;
