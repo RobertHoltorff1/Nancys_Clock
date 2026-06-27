@@ -11,6 +11,7 @@
 
 :root {
   --bg:     #080810;
+  --bg2:    #10101c;
   --bg3:    #181828;
   --text:   #f2f0ea;
   --text2:  #8a8880;
@@ -32,7 +33,7 @@ html, body {
   -webkit-user-select:none;
 }
 
-/* ══ LAYOUT — same 3-row as original ══ */
+/* ══ MAIN LAYOUT ══════════════════════════════════════════════ */
 #app {
   width:100%; height:100%;
   display:grid;
@@ -74,7 +75,7 @@ html, body {
   letter-spacing: 0.5px;
 }
 
-/* ── MIDDLE: CALENDAR (unchanged from original) ── */
+/* ── MIDDLE: CALENDAR ── */
 #calendar-block {
   background: var(--bg3);
   border: 1px solid var(--border);
@@ -94,9 +95,17 @@ html, body {
   color: var(--text2);
 }
 
-#cal-events { display:flex; flex-direction:column; gap:14px; }
+#cal-events {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
 
-.cal-event { display:flex; align-items:flex-start; gap:16px; }
+.cal-event {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
 
 .cal-event-time {
   font-size: 30px;
@@ -123,48 +132,31 @@ html, body {
 
 /* ── BOTTOM: COUNTDOWN BAR ── */
 #next-bar {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 10px;
-  padding: 4px 0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
 }
 
-#next-label {
-  font-size: 20px;
-  font-weight: 300;
-  color: var(--text2);
-}
-
-#next-count {
-  font-size: 48px;
-  font-weight: 200;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -1px;
-  color: var(--accent);
+#next-label { font-size:18px; color:var(--text2); }
+#next-time  {
+  font-size:18px; color:var(--accent); font-weight:500;
   transition: color 0.5s;
-  line-height: 1;
 }
-
-#next-count.warn   { color: var(--warn); }
-#next-count.urgent { color: var(--red); animation: urge 1s ease-in-out infinite; }
+#next-time.warn   { color: var(--warn); }
+#next-time.urgent { color: var(--red); animation: urge 1s ease-in-out infinite; }
+#next-at    { font-size:18px; color:var(--text2); }
 
 @keyframes urge {
   0%,100%{ opacity:1; }
   50%    { opacity:0.4; }
 }
 
-#next-at {
-  font-size: 20px;
-  font-weight: 300;
-  color: var(--text2);
-}
-
-/* ══ ALARM OVERLAY ══ */
+/* ══ ALARM OVERLAY ════════════════════════════════════════════ */
 #alarm-overlay {
   display:none;
   position:fixed; inset:0;
-  background:rgba(6,6,14,0.97);
+  background:rgba(6,6,14,0.96);
   z-index:100;
   flex-direction:column;
   align-items:center;
@@ -180,32 +172,54 @@ html, body {
   animation:bob 1.4s ease-in-out infinite;
 }
 @keyframes bob {
-  0%,100%{ transform:translateY(0); }
-  50%    { transform:translateY(-12px); }
+  0%,100%{transform:translateY(0);}
+  50%{transform:translateY(-12px);}
 }
 
-#alarm-name    { font-size:64px; font-weight:500; color:var(--accent); line-height:1; }
-#alarm-message { font-size:44px; font-weight:300; color:var(--text); line-height:1.3; max-width:680px; }
-#alarm-speaker { font-size:22px; color:var(--text2); font-style:italic; min-height:30px; }
+#alarm-name {
+  font-size:64px;
+  font-weight:500;
+  color:var(--accent);
+  line-height:1;
+}
+
+#alarm-message {
+  font-size:44px;
+  font-weight:300;
+  color:var(--text);
+  line-height:1.3;
+  max-width:680px;
+}
+
+#alarm-speaker {
+  font-size:22px;
+  color:var(--text2);
+  font-style:italic;
+  min-height:30px;
+}
 
 #stop-btn {
-  background: var(--accentd);
-  border: none;
-  border-radius: 60px;
-  color: #fff;
-  font-size: 34px;
-  font-weight: 400;
-  padding: 28px 56px;
-  cursor: pointer;
-  letter-spacing: 0.3px;
-  transition: transform 0.1s, background 0.15s;
-  min-width: 340px;
+  background:var(--accentd);
+  border:none;
+  border-radius:60px;
+  color:#fff;
+  font-size:34px;
+  font-weight:400;
+  padding:26px 72px;
+  cursor:pointer;
+  letter-spacing:0.5px;
+  transition:transform 0.1s, background 0.15s;
+  min-width:320px;
 }
 #stop-btn:active { transform:scale(0.96); background:var(--accent); color:#000; }
 
-#snooze-badge { font-size:20px; color:var(--warn); min-height:28px; }
+#snooze-badge {
+  font-size:20px;
+  color:var(--warn);
+  min-height:28px;
+}
 
-/* ══ ADMIN ══ */
+/* ══ ADMIN ════════════════════════════════════════════════════ */
 #admin-btn {
   position:fixed; bottom:14px; right:18px;
   background:transparent;
@@ -224,14 +238,15 @@ html, body {
   background:#090912;
   z-index:200;
   overflow-y:auto;
-  padding:28px 24px 52px;
+  padding:28px 24px 48px;
   flex-direction:column;
   gap:16px;
 }
 #admin-panel.open { display:flex; }
+
 #admin-panel h2 { font-size:22px; font-weight:400; border-bottom:1px solid var(--border); padding-bottom:12px; }
 
-.sec { font-size:12px; text-transform:uppercase; letter-spacing:2.5px; color:var(--text2); margin-top:6px; }
+.sec { font-size:12px; text-transform:uppercase; letter-spacing:2.5px; color:var(--text2); margin-top:8px; }
 
 #admin-panel input[type=text],
 #admin-panel textarea {
@@ -246,6 +261,7 @@ html, body {
 }
 #admin-panel textarea { height:120px; resize:vertical; font-size:14px; line-height:1.5; }
 
+/* Interval selector */
 .interval-btns { display:flex; gap:10px; }
 .iBtn {
   flex:1;
@@ -261,26 +277,27 @@ html, body {
 }
 .iBtn.sel { border-color:var(--accent); color:var(--accent); }
 
-.row  { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-.hint { font-size:12px; color:var(--text2); line-height:1.5; }
+.row { display:flex; gap:10px; align-items:center; }
 
 .btn-save  { background:var(--accentd); border:none; border-radius:12px; color:#fff; font-size:19px; padding:16px; cursor:pointer; width:100%; }
 .btn-close { background:var(--bg3); border:1px solid var(--border); border-radius:12px; color:var(--text2); font-size:17px; padding:14px; cursor:pointer; width:100%; }
-.btn-test  { background:#2a1f00; border:1px solid #ba7517; border-radius:10px; color:var(--warn); font-size:15px; padding:10px 16px; cursor:pointer; }
+.btn-test  { background:#2a1f00; border:1px solid #ba7517; border-radius:10px; color:var(--warn); font-size:15px; padding:10px 18px; cursor:pointer; }
+
+.hint { font-size:12px; color:var(--text2); line-height:1.5; }
 </style>
 </head>
 <body>
 
 <div id="app">
 
-  <!-- CLOCK -->
+  <!-- CLOCK TOP -->
   <div id="clock-block">
     <div id="time-display">12:00</div>
     <div id="ampm-display">PM</div>
     <div id="date-display">Saturday, June 27</div>
   </div>
 
-  <!-- CALENDAR (middle, unchanged) -->
+  <!-- CALENDAR MIDDLE -->
   <div id="calendar-block">
     <div id="cal-header">Dad's Schedule Today</div>
     <div id="cal-events">
@@ -288,10 +305,10 @@ html, body {
     </div>
   </div>
 
-  <!-- COUNTDOWN BAR (bottom) -->
+  <!-- COUNTDOWN BOTTOM -->
   <div id="next-bar">
     <span id="next-label">Next bathroom break in</span>
-    <span id="next-count">—</span>
+    <span id="next-time">—</span>
     <span id="next-at"></span>
   </div>
 
@@ -307,16 +324,17 @@ html, body {
   <div id="snooze-badge"></div>
 </div>
 
-<!-- SETTINGS -->
+<!-- SETTINGS BUTTON -->
 <button id="admin-btn" onclick="openAdmin()">⚙ Settings</button>
 
+<!-- SETTINGS PANEL -->
 <div id="admin-panel">
   <h2>⚙ Settings</h2>
 
   <div class="sec">Her name</div>
   <input type="text" id="s-name" value="Nancy">
 
-  <div class="sec">Timer interval — resets every time she dismisses the alarm</div>
+  <div class="sec">Timer interval — restarts every time she dismisses the alarm</div>
   <div class="interval-btns">
     <button class="iBtn" data-mins="90"  onclick="selInterval(this)">1½ hr</button>
     <button class="iBtn" data-mins="120" onclick="selInterval(this)">2 hr</button>
@@ -324,77 +342,78 @@ html, body {
     <button class="iBtn" data-mins="180" onclick="selInterval(this)">3 hr</button>
   </div>
 
-  <div class="sec">Family alarm messages — shown on first ring</div>
-  <p class="hint">One per line · Format: emoji | message | who is speaking<br>
+  <div class="sec">Family alarm messages — shown FIRST each reminder</div>
+  <p class="hint">One per line. Format: emoji | message text | who is speaking<br>
   Example: 👨 | Nancy, time to go pee! | — Dad</p>
   <textarea id="s-family"></textarea>
 
-  <div class="sec">Celebrity snooze messages — if she doesn't get up</div>
-  <p class="hint">Same format. Rotate in order each time the alarm re-fires.</p>
+  <div class="sec">Celebrity snooze messages — shown if she doesn't get up</div>
+  <p class="hint">Same format. These rotate in order each time the alarm re-fires.</p>
   <textarea id="s-celebs"></textarea>
 
   <div class="sec">Dad's Google Calendar (iCal URL)</div>
-  <p class="hint">Google Calendar → Settings → your calendar → "Secret address in iCal format"</p>
+  <p class="hint">In Google Calendar → Settings → your calendar → "Secret address in iCal format"</p>
   <input type="text" id="s-calurl" placeholder="https://calendar.google.com/calendar/ical/...">
 
   <div class="sec">Test</div>
   <div class="row">
-    <button class="btn-test" onclick="triggerAlarm(0)">▶ Test alarm</button>
-    <button class="btn-test" onclick="triggerAlarm(1)">▶ Test snooze msg</button>
+    <button class="btn-test" onclick="triggerAlarm(0)">▶ Test first alarm</button>
+    <button class="btn-test" onclick="triggerAlarm(1)">▶ Test 1st snooze</button>
+    <button class="btn-test" onclick="triggerAlarm(2)">▶ Test 2nd snooze</button>
   </div>
 
   <div style="height:8px"></div>
-  <button class="btn-save"  onclick="saveAdmin()">Save &amp; Close</button>
+  <button class="btn-save" onclick="saveAdmin()">Save & Close</button>
   <button class="btn-close" onclick="closeAdmin()">Cancel</button>
 </div>
 
 <script>
-/* ══ DEFAULTS ══ */
+/* ══ DEFAULT CONTENT ══════════════════════════════════════════ */
 const DEF_FAMILY = [
-  { emoji:"👨", text:"Nancy, time to take a bathroom break!",    speaker:"— Dad" },
-  { emoji:"👦", text:"Mom, go to the bathroom — we love you!",   speaker:"— Your son" },
-  { emoji:"🏠", text:"Nancy, bathroom break time. Up you go!",   speaker:"— The family" },
+  { emoji:"👨", text:"Nancy, time to take a bathroom break!", speaker:"— Dad" },
+  { emoji:"👦", text:"Mom, go to the bathroom — we love you!", speaker:"— Your son" },
+  { emoji:"🏠", text:"Nancy, bathroom break time. Up you go!", speaker:"— The family" },
 ];
 
 const DEF_CELEBS = [
-  { emoji:"🎵", text:"Nancy, I've gotta get up — and so do you! Bathroom, now!",                      speaker:"— Harry Nilsson" },
-  { emoji:"🖖", text:"Nancy, this is Captain Kirk. I order you to visit the bathroom. Energize!",     speaker:"— William Shatner" },
-  { emoji:"🐰", text:"Eh, what's up, Nancy? Time to hit the little girls' room, doc!",                speaker:"— Bugs Bunny" },
+  { emoji:"🎵", text:"Nancy, I've gotta get up — and so do you! Bathroom, now!", speaker:"— Harry Nilsson" },
+  { emoji:"🖖", text:"Nancy, this is Captain Kirk. I order you to visit the bathroom. Energize!", speaker:"— William Shatner" },
+  { emoji:"🐰", text:"Eh, what's up, Nancy? It's Bugs! Time to hit the little girls' room, doc!", speaker:"— Bugs Bunny" },
   { emoji:"🤠", text:"Nancy, this is your moment of courage. Head on down to the bathroom, partner!", speaker:"— John Wayne" },
-  { emoji:"👸", text:"Nancy darling, a quick trip to the bathroom keeps you feeling fabulous!",       speaker:"— Betty White" },
-  { emoji:"🎬", text:"You've got to ask yourself — have you visited the bathroom lately? Well, have ya?", speaker:"— Clint Eastwood" },
-  { emoji:"🚽", text:"Nobody puts Baby in a corner — but everybody goes to the bathroom!",            speaker:"— Patrick Swayze" },
+  { emoji:"👸", text:"Nancy darling, a quick trip to the bathroom keeps you feeling fabulous!", speaker:"— Betty White" },
+  { emoji:"🎬", text:"Nancy! You've got to ask yourself — have you visited the bathroom lately? Well, have ya?", speaker:"— Clint Eastwood" },
+  { emoji:"🚽", text:"Nancy, nobody puts Baby in a corner — but everybody goes to the bathroom!", speaker:"— Patrick Swayze" },
 ];
 
-/* ══ STATE ══ */
+/* ══ STATE ════════════════════════════════════════════════════ */
 let S = {
   name:         "Nancy",
-  intervalMins: 150,
-  nextAlarmAt:  null,
+  intervalMins: 150,      // 2.5 hours default
+  nextAlarmAt:  null,     // ms timestamp — null = no timer yet
   family:       DEF_FAMILY,
   celebs:       DEF_CELEBS,
   calUrl:       "",
 };
 
-let alarmActive   = false;
-let snoozeCount   = 0;
-let snoozeTimer   = null;
-let celebIndex    = 0;
-let audioCtx      = null;
-let alarmInterval = null;
+let alarmActive  = false;
+let snoozeCount  = 0;
+let snoozeTimer  = null;
+let celebIndex   = 0;
+let audioCtx     = null;
+let alarmInterval= null;
 
-/* ══ PERSIST ══ */
+/* ══ PERSIST ══════════════════════════════════════════════════ */
 function loadState() {
   try {
-    const d = localStorage.getItem("nc4");
+    const d = localStorage.getItem("nc25");
     if (d) S = { ...S, ...JSON.parse(d) };
   } catch(e) {}
 }
 function saveState() {
-  try { localStorage.setItem("nc4", JSON.stringify(S)); } catch(e) {}
+  try { localStorage.setItem("nc25", JSON.stringify(S)); } catch(e) {}
 }
 
-/* ══ CLOCK ══ */
+/* ══ CLOCK ════════════════════════════════════════════════════ */
 function updateClock() {
   const now  = new Date();
   const h    = now.getHours();
@@ -407,9 +426,9 @@ function updateClock() {
   document.getElementById("ampm-display").textContent = ampm;
   document.getElementById("date-display").textContent = fmtDate(now);
 
-  updateBottomBar(now);
+  updateNextBar(now);
 
-  // Fire when countdown hits zero
+  // Fire alarm when countdown hits zero
   if (!alarmActive && S.nextAlarmAt && now.getTime() >= S.nextAlarmAt) {
     S.nextAlarmAt = null;
     saveState();
@@ -421,20 +440,19 @@ function updateClock() {
 
 function fmtDate(d) {
   const days   = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-  const months = ["January","February","March","April","May","June","July",
-                  "August","September","October","November","December"];
+  const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
   return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}`;
 }
 
-/* ══ BOTTOM BAR ══ */
-function updateBottomBar(now) {
-  const countEl = document.getElementById("next-count");
-  const atEl    = document.getElementById("next-at");
+/* ══ BOTTOM BAR ═══════════════════════════════════════════════ */
+function updateNextBar(now) {
+  const timeEl = document.getElementById("next-time");
+  const atEl   = document.getElementById("next-at");
 
   if (!S.nextAlarmAt || alarmActive) {
-    countEl.textContent = "—";
-    countEl.className   = "";
-    atEl.textContent    = "";
+    timeEl.textContent = "—";
+    timeEl.className   = "";
+    atEl.textContent   = "";
     return;
   }
 
@@ -457,9 +475,10 @@ function updateBottomBar(now) {
     cls     = "urgent";
   }
 
-  countEl.textContent = display;
-  countEl.className   = cls;
+  timeEl.textContent = display;
+  timeEl.className   = cls;
 
+  // Show target clock time alongside the countdown
   const target = new Date(S.nextAlarmAt);
   const th12   = target.getHours() % 12 || 12;
   const tampm  = target.getHours() >= 12 ? "PM" : "AM";
@@ -467,7 +486,74 @@ function updateBottomBar(now) {
   atEl.textContent = `· at ${th12}:${tmm} ${tampm}`;
 }
 
-/* ══ ALARM ══ */
+/* ══ CALENDAR ══════════════════════════════════════════════════ */
+function updateCalendar() {
+  if (!S.calUrl) {
+    showCalPlaceholder();
+    return;
+  }
+  fetchCal();
+}
+
+function showCalPlaceholder() {
+  document.getElementById("cal-events").innerHTML =
+    `<div id="cal-empty" style="font-size:30px;font-weight:300;color:var(--text2);line-height:1.5">
+      Dad's schedule will appear here<br>once his Google Calendar is connected.
+    </div>`;
+}
+
+async function fetchCal() {
+  try {
+    const url = `https://api.allorigins.win/get?url=${encodeURIComponent(S.calUrl)}`;
+    const r   = await fetch(url);
+    const d   = await r.json();
+    renderCalEvents(parseIcal(d.contents));
+  } catch(e) {
+    document.getElementById("cal-events").innerHTML =
+      `<div id="cal-empty" style="font-size:26px;color:var(--text2)">Couldn't reach calendar right now.</div>`;
+  }
+}
+
+function parseIcal(text) {
+  if (!text) return [];
+  const today    = new Date();
+  const yyyymmdd = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,"0")}${String(today.getDate()).padStart(2,"0")}`;
+  const events   = [];
+  const blocks   = text.split("BEGIN:VEVENT").slice(1);
+  for (const b of blocks) {
+    const sum = b.match(/SUMMARY[^:]*:([^\r\n]+)/);
+    const dt  = b.match(/DTSTART[^:]*:(\d{8})/);
+    if (!sum || !dt || !dt[1].startsWith(yyyymmdd)) continue;
+    let timeStr = "";
+    const dtFull = b.match(/DTSTART[^:]*:(\d{8}T\d{6})/);
+    if (dtFull) {
+      const raw = dtFull[1];
+      const h   = parseInt(raw.slice(9,11));
+      const m   = raw.slice(11,13);
+      const h12 = h%12||12;
+      const ap  = h>=12?"PM":"AM";
+      timeStr   = `${h12}:${m} ${ap}`;
+    }
+    events.push({ time: timeStr, text: sum[1].trim() });
+  }
+  // Cap at 3 events so the calendar never swamps the screen
+  return events.slice(0, 3);
+}
+
+function renderCalEvents(events) {
+  const el = document.getElementById("cal-events");
+  if (!events.length) {
+    el.innerHTML = `<div style="font-size:32px;font-weight:300;color:var(--text2)">Dad has nothing scheduled — he's home.</div>`;
+    return;
+  }
+  el.innerHTML = events.map(e => `
+    <div class="cal-event">
+      <div class="cal-event-time">${e.time||"All day"}</div>
+      <div class="cal-event-text">${e.text}</div>
+    </div>`).join("");
+}
+
+/* ══ ALARM LOGIC ══════════════════════════════════════════════ */
 function triggerAlarm(forcedSnooze) {
   alarmActive = true;
   clearTimeout(snoozeTimer);
@@ -484,11 +570,12 @@ function triggerAlarm(forcedSnooze) {
     celebIndex++;
   }
 
-  document.getElementById("alarm-emoji").textContent   = msg.emoji   || "🚽";
+  document.getElementById("alarm-emoji").textContent   = msg.emoji || "🚽";
   document.getElementById("alarm-name").textContent    = S.name + "!";
   document.getElementById("alarm-message").textContent = msg.text;
-  document.getElementById("alarm-speaker").textContent = msg.speaker  || "";
-  document.getElementById("snooze-badge").textContent  =
+  document.getElementById("alarm-speaker").textContent = msg.speaker || "";
+
+  document.getElementById("snooze-badge").textContent =
     sc > 0 ? `Reminder #${sc+1} — ${S.name}, please get up! 🙏` : "";
 
   document.getElementById("alarm-overlay").classList.add("active");
@@ -496,18 +583,19 @@ function triggerAlarm(forcedSnooze) {
 
   // Auto-snooze after 60 sec if no response
   snoozeTimer = setTimeout(() => {
-    if (!alarmActive) return;
-    snoozeCount++;
-    stopAlarmVisuals();
-    stopBeep();
-    snoozeTimer = setTimeout(() => {
-      if (alarmActive) triggerAlarm(snoozeCount);
-    }, 4 * 60 * 1000);
+    if (alarmActive) {
+      snoozeCount++;
+      stopAlarmVisuals();
+      stopBeep();
+      snoozeTimer = setTimeout(() => {
+        if (alarmActive) triggerAlarm(snoozeCount);
+      }, 4 * 60 * 1000);
+    }
   }, 60 * 1000);
 }
 
 function stopAlarm() {
-  // She dismissed it — restart the countdown from right now
+  // She dismissed it — restart the full countdown from right now
   alarmActive = false;
   snoozeCount = 0;
   celebIndex  = 0;
@@ -522,7 +610,7 @@ function stopAlarmVisuals() {
   document.getElementById("alarm-overlay").classList.remove("active");
 }
 
-/* ══ SOUND ══ */
+/* ══ SOUND ════════════════════════════════════════════════════ */
 function startBeep() {
   stopBeep();
   playChime();
@@ -532,7 +620,7 @@ function startBeep() {
 function stopBeep() {
   clearInterval(alarmInterval);
   alarmInterval = null;
-  try { if (audioCtx) { audioCtx.close(); audioCtx = null; } } catch(e) {}
+  try { if (audioCtx) { audioCtx.close(); audioCtx = null; } } catch(e){}
 }
 
 function playChime() {
@@ -558,69 +646,10 @@ function playChime() {
       osc.start(audioCtx.currentTime+t);
       osc.stop(audioCtx.currentTime+t+d+0.05);
     });
-  } catch(e) {}
+  } catch(e){}
 }
 
-/* ══ CALENDAR ══ */
-function updateCalendar() {
-  if (!S.calUrl) { showCalPlaceholder(); return; }
-  fetchCal();
-}
-
-function showCalPlaceholder() {
-  document.getElementById("cal-events").innerHTML =
-    `<div id="cal-empty" style="font-size:30px;font-weight:300;color:var(--text2);line-height:1.5">
-      Dad's schedule will appear here once his Google Calendar is connected.
-    </div>`;
-}
-
-async function fetchCal() {
-  try {
-    const url = `https://api.allorigins.win/get?url=${encodeURIComponent(S.calUrl)}`;
-    const r   = await fetch(url);
-    const d   = await r.json();
-    renderCalEvents(parseIcal(d.contents));
-  } catch(e) {
-    document.getElementById("cal-events").innerHTML =
-      `<div id="cal-empty" style="font-size:26px;color:var(--text2)">Couldn't reach calendar right now.</div>`;
-  }
-}
-
-function parseIcal(text) {
-  if (!text) return [];
-  const today    = new Date();
-  const yyyymmdd = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,"0")}${String(today.getDate()).padStart(2,"0")}`;
-  const events   = [];
-  for (const b of text.split("BEGIN:VEVENT").slice(1)) {
-    const sum = b.match(/SUMMARY[^:]*:([^\r\n]+)/);
-    const dt  = b.match(/DTSTART[^:]*:(\d{8})/);
-    if (!sum || !dt || !dt[1].startsWith(yyyymmdd)) continue;
-    let timeStr = "";
-    const dtF = b.match(/DTSTART[^:]*:(\d{8}T\d{6})/);
-    if (dtF) {
-      const raw = dtF[1];
-      const h   = parseInt(raw.slice(9,11));
-      timeStr   = `${h%12||12}:${raw.slice(11,13)} ${h>=12?"PM":"AM"}`;
-    }
-    events.push({ time: timeStr, text: sum[1].trim() });
-  }
-  return events;
-}
-
-function renderCalEvents(events) {
-  const el = document.getElementById("cal-events");
-  if (!events.length) {
-    el.innerHTML = `<div style="font-size:32px;font-weight:300;color:var(--text2)">Dad has nothing scheduled — he's home.</div>`;
-    return;
-  }
-  el.innerHTML = events.map(e => `
-    <div class="cal-event">
-      <div class="cal-event-time">${e.time || "All day"}</div>
-      <div class="cal-event-text">${e.text}</div>
-    </div>`).join("");
-}
-
-/* ══ ADMIN ══ */
+/* ══ ADMIN ════════════════════════════════════════════════════ */
 let _pendingMins = 150;
 
 function openAdmin() {
@@ -652,33 +681,34 @@ function saveAdmin() {
   S.calUrl       = document.getElementById("s-calurl").value.trim();
   S.intervalMins = _pendingMins || 150;
 
-  const parse = raw => raw.split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{
-    const p = l.split("|");
-    return { emoji:p[0]?.trim()||"🚽", text:p[1]?.trim()||l, speaker:p[2]?.trim()||"" };
-  });
+  const parseMessages = raw =>
+    raw.split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{
+      const p = l.split("|");
+      return { emoji:p[0]?.trim()||"🚽", text:p[1]?.trim()||l, speaker:p[2]?.trim()||"" };
+    });
 
   const fRaw = document.getElementById("s-family").value.trim();
   const cRaw = document.getElementById("s-celebs").value.trim();
-  if (fRaw) S.family = parse(fRaw);
-  if (cRaw) S.celebs = parse(cRaw);
+  if (fRaw) S.family = parseMessages(fRaw);
+  if (cRaw) S.celebs = parseMessages(cRaw);
 
   saveState();
   closeAdmin();
   updateCalendar();
 }
 
-/* ══ BOOT ══ */
+/* ══ BOOT ══════════════════════════════════════════════════════ */
 loadState();
 
-// Auto-start: if no valid future timestamp exists, create one now
+// Auto-start: if no valid future alarm exists, create one now
 if (!S.nextAlarmAt || S.nextAlarmAt <= Date.now()) {
-  // If it expired very recently (within 5 min), fire the alarm
   if (S.nextAlarmAt && Date.now() - S.nextAlarmAt < 5 * 60 * 1000) {
+    // Expired within last 5 min — fire the alarm
     S.nextAlarmAt = null;
     saveState();
     setTimeout(() => { snoozeCount=0; celebIndex=0; triggerAlarm(0); }, 700);
   } else {
-    // First run or stale — start fresh countdown
+    // First run or long-stale — start a fresh countdown
     S.nextAlarmAt = Date.now() + S.intervalMins * 60 * 1000;
     saveState();
   }
@@ -687,12 +717,12 @@ if (!S.nextAlarmAt || S.nextAlarmAt <= Date.now()) {
 updateClock();
 setInterval(updateClock, 1000);
 updateCalendar();
-setInterval(updateCalendar, 10 * 60 * 1000);
+setInterval(updateCalendar, 10*60*1000);
 
-document.addEventListener("visibilitychange", () => {
-  if (!document.hidden) updateClock();
+document.addEventListener("visibilitychange", ()=>{
+  if (!document.hidden) { updateClock(); updateCalendar(); }
 });
-document.addEventListener("touchstart", ()=>{}, { passive:true });
+document.addEventListener("touchstart",()=>{},{passive:true});
 </script>
 </body>
 </html>
