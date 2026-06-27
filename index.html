@@ -763,9 +763,14 @@ function parseIcal(text) {
       // For all-day events, end is exclusive so subtract 1 day
       if (isAllDay) endDate.setDate(endDate.getDate()-1);
       const daysLeft = Math.ceil((endDate - today) / 86400000);
+      // Day of week of the return day (the day after the trip ends)
+      const returnDate = new Date(today);
+      returnDate.setDate(today.getDate() + Math.max(daysLeft, 0));
+      const dayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+      const returnDOW = dayNames[returnDate.getDay()];
       const suffix = daysLeft <= 0 ? "back today"
-                   : daysLeft === 1 ? "back tomorrow"
-                   : `back in ${daysLeft} days`;
+                   : daysLeft === 1 ? `back tomorrow - ${returnDOW}`
+                   : `back in ${daysLeft} days - ${returnDOW}`;
       events.push({ time: "", text: title, multiDay: true, suffix });
       continue;
     }
