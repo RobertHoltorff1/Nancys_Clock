@@ -1066,10 +1066,12 @@ function startBeep() {
 function playPeeSong() {
   if (!PEE_SONGS.length) return false;
   try {
-    stopPeeSong();
-    const url = nextFromQueue(PEE_SONGS, peeQ);
-    peeAudio = new Audio(url);
+    if (!peeAudio) peeAudio = new Audio();   // reuse the SAME element (stays unlocked)
+    peeAudio.pause();
+    peeAudio.muted = false;
     peeAudio.volume = 0.95;
+    peeAudio.src = nextFromQueue(PEE_SONGS, peeQ);
+    peeAudio.currentTime = 0;
     // If the file is missing or the browser blocks playback, fall back to the chime.
     peeAudio.onerror = () => startChimeFallback();
     const p = peeAudio.play();
@@ -1079,7 +1081,35 @@ function playPeeSong() {
 }
 
 function stopPeeSong() {
-  try { if (peeAudio) { peeAudio.pause(); peeAudio = null; } } catch(e){}
+  try { if (peeAudio) { peeAudio.pause(); peeAudio.currentTime = 0; } } catch(e){}
+}
+
+/* ── iOS audio unlock ──
+   iOS Safari blocks audio that starts on a timer unless it's been "unlocked"
+   by a real finger tap. On the first tap anywhere, we silently play (muted)
+   the reusable audio element to bless it, so timer-fired alarms can play later. */
+let audioPrimed = false;
+function primeAudio() {
+  if (audioPrimed) return;
+  try {
+    if (!peeAudio) peeAudio = new Audio();
+    peeAudio.muted = true;
+    if (PEE_SONGS.length) peeAudio.src = PEE_SONGS[0];
+    const p = peeAudio.play();
+    if (p && p.then) {
+      p.then(() => {
+        peeAudio.pause(); peeAudio.currentTime = 0; peeAudio.muted = false;
+        audioPrimed = true;
+      }).catch(() => { peeAudio.muted = false; });
+    } else {
+      peeAudio.pause(); peeAudio.muted = false; audioPrimed = true;
+    }
+  } catch(e){}
+  // Also wake the Web Audio context used by the fallback chime
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  } catch(e){}
 }
 
 function startChimeFallback() {
@@ -1329,7 +1359,8 @@ document.addEventListener("visibilitychange", ()=>{
     scheduleNextAlarm();
   }
 });
-document.addEventListener("touchstart",()=>{},{passive:true});
+document.addEventListener("touchstart", primeAudio, { passive: true });
+document.addEventListener("click", primeAudio);
 </script>
 </body>
 </html>
