@@ -259,8 +259,7 @@ html, body {
 #alarm-overlay.active { display:flex; }
 
 #alarm-emoji {
-  font-size:96px;
-  animation:bob 1.4s ease-in-out infinite;
+  display:none;
 }
 @keyframes bob {
   0%,100%{transform:translateY(0);}
@@ -268,22 +267,22 @@ html, body {
 }
 
 #alarm-name {
-  font-size:64px;
-  font-weight:500;
+  font-size:120px;
+  font-weight:700;
   color:var(--accent);
   line-height:1;
 }
 
 #alarm-message {
-  font-size:44px;
-  font-weight:300;
-  color:var(--text);
-  line-height:1.3;
-  max-width:680px;
+  font-size:80px;
+  font-weight:500;
+  color:#ffffff;
+  line-height:1.25;
+  max-width:900px;
 }
 
 #alarm-speaker {
-  font-size:22px;
+  font-size:40px;
   color:var(--text2);
   font-style:italic;
   min-height:30px;
@@ -294,18 +293,18 @@ html, body {
   border:none;
   border-radius:60px;
   color:#fff;
-  font-size:34px;
-  font-weight:400;
-  padding:26px 72px;
+  font-size:52px;
+  font-weight:500;
+  padding:36px 90px;
   cursor:pointer;
   letter-spacing:0.5px;
   transition:transform 0.1s, background 0.15s;
-  min-width:320px;
+  min-width:420px;
 }
 #stop-btn:active { transform:scale(0.96); background:var(--accent); color:#000; }
 
 #snooze-badge {
-  font-size:20px;
+  font-size:36px;
   color:var(--warn);
   min-height:28px;
 }
@@ -1001,7 +1000,7 @@ function triggerAlarm(forcedSnooze) {
       stopAlarmVisuals();
       snoozeTimer = setTimeout(() => {
         if (alarmActive) triggerAlarm(snoozeCount);
-      }, 5 * 60 * 1000);
+      }, 2.5 * 60 * 1000);
     }
   }, 60 * 1000);
 }
