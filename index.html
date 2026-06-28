@@ -985,16 +985,16 @@ function triggerAlarm(forcedSnooze) {
 
   document.getElementById("alarm-overlay").classList.add("active");
 
-  // Play chime for 30 seconds
+  // Play song/chime for up to 60 seconds (clips end on their own sooner)
   startBeep();
   snoozeTimer = setTimeout(() => {
     if (alarmActive) {
       stopBeep();
     }
-  }, 30 * 1000);
+  }, 60 * 1000);
 
-  // After 30 sec overlay stays visible — auto-dismiss overlay after 30s
-  // then wait 5 min and repeat forever until button pressed
+  // Overlay stays visible for 60s, then dismisses and waits 5 min before
+  // repeating — keeps repeating until the button is pressed.
   setTimeout(() => {
     if (alarmActive) {
       snoozeCount++;
@@ -1003,7 +1003,7 @@ function triggerAlarm(forcedSnooze) {
         if (alarmActive) triggerAlarm(snoozeCount);
       }, 5 * 60 * 1000);
     }
-  }, 30 * 1000);
+  }, 60 * 1000);
 }
 
 function stopAlarm() {
