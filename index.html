@@ -890,10 +890,9 @@ function renderCalEvents(events) {
     if (e.preview) {
       return `
         <div class="cal-event">
-          <div class="cal-event-time" style="color:#7dd8f0;font-size:30px">Tomorrow</div>
-          <div class="cal-event-text" style="color:#c8e8ff;font-size:34px">
-            ${smartPrefix(e.text)}
-            ${e.countdown ? `<span style="font-size:26px;color:#7dd8f0;font-weight:400"> · ${e.countdown}</span>` : ''}
+          <div class="cal-event-text" style="flex:1">
+            <span style="color:#7dd8f0">Tomorrow: </span>${smartPrefix(e.text)}
+            ${e.countdown ? `<span style="font-size:36px;color:#7dd8f0;font-weight:400"> · ${e.countdown}</span>` : ''}
           </div>
         </div>`;
     }
