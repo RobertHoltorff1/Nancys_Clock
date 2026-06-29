@@ -258,6 +258,15 @@ html, body {
 }
 #alarm-overlay.active { display:flex; }
 
+/* Quiet-evening silent visual cue: gently flash the reminder on and off */
+#alarm-overlay.flashing {
+  animation: alarmFlash 1.5s steps(1, end) infinite;
+}
+@keyframes alarmFlash {
+  0%, 55%   { opacity: 1; }
+  55.01%, 100% { opacity: 0.1; }
+}
+
 #alarm-emoji {
   display:none;
 }
@@ -561,9 +570,18 @@ function fmtDate(d) {
   return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}`;
 }
 
-function isQuietHours() {
+// Three time zones for reminders:
+//   10 AM – 10 PM  → "normal": song plays, screen PERSISTS until she taps
+//   10 PM –  1 AM  → "visual": NO sound, screen flashes ~10 min, then reverts
+//    1 AM – 10 AM  → full silence: nothing fires at all, just the clock
+function isFullSilence() {
   const h = new Date().getHours();
-  return h >= 22 || h < 10; // 10 PM to 10 AM
+  return h >= 1 && h < 10; // 1 AM – 10 AM
+}
+function alarmMode() {
+  const h = new Date().getHours();
+  if (h >= 22 || h < 1) return 'visual'; // 10 PM – 1 AM
+  return 'normal';                        // 10 AM – 10 PM
 }
 
 function updateNextBar() {
@@ -596,8 +614,8 @@ function updateNextBar() {
     countdownEl.textContent = "any moment now";
   }
 
-  // Show quiet hours message if in quiet window
-  if (isQuietHours()) {
+  // During full silence (1 AM – 10 AM) nothing fires
+  if (isFullSilence()) {
     countdownEl.textContent = "No reminders until 10:00 AM";
   }
 }
@@ -608,11 +626,11 @@ function scheduleNextAlarm() {
   if (!S.nextAlarmAt) return;
   const delay = S.nextAlarmAt - Date.now();
   if (delay <= 0) {
-    // Overdue — only fire if not in quiet hours
-    if (!isQuietHours()) {
+    // Overdue — fire unless we're in the 1 AM–10 AM full-silence window
+    if (!isFullSilence()) {
       snoozeCount = 0; celebIndex = 0; triggerAlarm(0);
     } else {
-      // Push to 10 AM if in quiet hours
+      // Full silence — push to 10 AM
       const next10 = new Date();
       next10.setHours(10, 0, 0, 0);
       if (next10 <= new Date()) next10.setDate(next10.getDate() + 1);
@@ -622,10 +640,10 @@ function scheduleNextAlarm() {
     }
   } else {
     mainTimer = setTimeout(() => {
-      if (!isQuietHours()) {
+      if (!isFullSilence()) {
         snoozeCount = 0; celebIndex = 0; triggerAlarm(0);
       } else {
-        // Quiet hours — push to 10 AM
+        // Full silence — push to 10 AM
         const next10 = new Date();
         next10.setHours(10, 0, 0, 0);
         if (next10 <= new Date()) next10.setDate(next10.getDate() + 1);
@@ -962,6 +980,8 @@ function triggerAlarm(forcedSnooze) {
   clearTimeout(snoozeTimer);
   stopBeep();
 
+  const mode = alarmMode(); // 'normal' (day) or 'visual' (10 PM–1 AM)
+
   const sc = (forcedSnooze !== undefined) ? forcedSnooze : snoozeCount;
   let msg;
 
@@ -973,7 +993,6 @@ function triggerAlarm(forcedSnooze) {
     celebIndex++;
   }
 
-  document.getElementById("alarm-emoji").textContent   = msg.emoji || "🚽";
   document.getElementById("alarm-name").textContent    = S.name + "!";
   document.getElementById("alarm-message").textContent = msg.text;
   document.getElementById("alarm-speaker").textContent = msg.speaker || "";
@@ -981,26 +1000,44 @@ function triggerAlarm(forcedSnooze) {
   document.getElementById("snooze-badge").textContent =
     sc > 0 ? `Reminder #${sc+1} — ${S.name}, please get up! 🙏` : "";
 
-  document.getElementById("alarm-overlay").classList.add("active");
+  const overlay = document.getElementById("alarm-overlay");
+  overlay.classList.add("active");
 
-  // Play song/chime for up to 60 seconds (clips end on their own sooner)
+  if (mode === 'visual') {
+    // ── QUIET EVENING (10 PM – 1 AM): silent, flashing screen for 10 minutes ──
+    // No song. If nobody taps within 10 min, revert and re-arm on the 2.5-hr
+    // rhythm (so a night owl still gets nudged, but it won't flash all night).
+    overlay.classList.add("flashing");
+    stopBeep();
+    snoozeTimer = setTimeout(() => {
+      if (alarmActive) {
+        alarmActive = false;
+        snoozeCount = 0; celebIndex = 0;
+        overlay.classList.remove("flashing");
+        stopAlarmVisuals();
+        S.nextAlarmAt = Date.now() + RESET_MS; // next visual nudge in 2.5 hr
+        saveState();
+        scheduleNextAlarm();
+        updateNextBar();
+      }
+    }, 10 * 60 * 1000); // flash for 10 minutes
+    return;
+  }
+
+  // ── NORMAL DAYTIME (10 AM – 10 PM): song + PERSISTENT screen until tapped ──
+  overlay.classList.remove("flashing");
   startBeep();
+  // Stop the sound after 60s, but KEEP the screen and button up the whole time.
   snoozeTimer = setTimeout(() => {
-    if (alarmActive) {
-      stopBeep();
-    }
-  }, 60 * 1000);
-
-  // Overlay stays visible for 60s, then dismisses and waits 5 min before
-  // repeating — keeps repeating until the button is pressed.
-  setTimeout(() => {
-    if (alarmActive) {
-      snoozeCount++;
-      stopAlarmVisuals();
-      snoozeTimer = setTimeout(() => {
-        if (alarmActive) triggerAlarm(snoozeCount);
-      }, 2.5 * 60 * 1000);
-    }
+    if (alarmActive) stopBeep();
+    // Replay the song every 2.5 min while she still hasn't tapped.
+    // The screen never auto-dismisses — only her button press clears it.
+    snoozeTimer = setTimeout(() => {
+      if (alarmActive) {
+        snoozeCount++;
+        triggerAlarm(snoozeCount);
+      }
+    }, 2.5 * 60 * 1000);
   }, 60 * 1000);
 }
 
@@ -1011,6 +1048,7 @@ function stopAlarm() {
   clearTimeout(snoozeTimer);
   clearTimeout(dismissTimer);
   stopBeep();
+  document.getElementById("alarm-overlay").classList.remove("flashing");
   stopAlarmVisuals();
   // Reset 2.5-hour countdown from right now
   resetAlarmTimer();
