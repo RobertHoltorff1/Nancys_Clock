@@ -355,7 +355,7 @@ html, body {
   </div>
 
   <!-- I JUST WENT — always visible -->
-  <button id="went-btn" onclick="iJustWent()">🚽 &nbsp;I just went to the bathroom &nbsp;✓</button>
+  <button id="went-btn" onclick="iJustWent()">🚽 &nbsp;I'm headed to the bathroom now &nbsp;✓</button>
 
   <!-- NEXT REMINDER BOTTOM -->
   <div id="next-bar">
@@ -379,8 +379,8 @@ html, body {
 <div id="pills-overlay">
   <div id="pills-emoji">💊</div>
   <div id="pills-greeting">Good morning, Nancy!</div>
-  <div id="pills-message">Time to take your morning pills.</div>
-  <button id="pills-btn" onclick="confirmPills()">I took my pills ✓</button>
+  <div id="pills-message">Time for Nancy's morning pills.</div>
+  <button id="pills-btn" onclick="confirmPills()">Pills given ✓</button>
 </div>
 
 <!-- SETTINGS BUTTON -->
@@ -394,19 +394,27 @@ html, body {
   <input type="text" id="s-name" value="Nancy">
 
   <div class="sec">Reminder interval (minutes)</div>
-  <p class="hint">How many minutes between bathroom reminders. Default: 150 (= 2½ hours). The timer resets each time she presses "I just went" or dismisses an alarm.</p>
+  <p class="hint">How many minutes between bathroom reminders. Default: 150 (= 2½ hours). The timer resets each time she presses "I'm headed to the bathroom now" or dismisses an alarm.</p>
   <input type="number" id="s-interval" value="150" min="30" max="480">
 
+  <div class="sec">Default clip length (seconds)</div>
+  <p class="hint">Used for any message that doesn't specify its own clip length. The chime plays once, full length, at full volume — then loops quietly at that same length until the next full-volume play, 2 min 30 sec after the first one started.</p>
+  <input type="number" id="s-clipsec" value="30" min="10" max="60">
+
+  <div class="sec">Quiet-loop volume (%)</div>
+  <p class="hint">How loud the looping background chime is between full-volume plays, as a percent of full volume. 50% ≈ 6 dB quieter (roughly half as loud).</p>
+  <input type="number" id="s-duckpct" value="50" min="10" max="90">
+
   <div class="sec">Morning pills message</div>
-  <p class="hint">Shown on the overnight screen until she confirms she took her pills.</p>
-  <input type="text" id="s-pillsmsg" placeholder="Time to take your morning pills.">
+  <p class="hint">Shown on the overnight screen until a helper or family member confirms her pills were given.</p>
+  <input type="text" id="s-pillsmsg" placeholder="Time for Nancy's morning pills.">
 
   <div class="sec">Family alarm messages — shown on first alarm each cycle</div>
-  <p class="hint">One per line. Format: emoji | message text | who is speaking<br>Example: 👨 | Nancy, time to go pee! | — Dad</p>
+  <p class="hint">One per line. Format: emoji | message text | who is speaking | clip length in seconds (optional)<br>Example: 👨 | Nancy, time to go pee! | — Dad | 30<br>Leave the last field off (or blank) to use the default clip length below.</p>
   <textarea id="s-family"></textarea>
 
   <div class="sec">Celebrity snooze messages — shown on 2nd, 3rd, 4th reminder</div>
-  <p class="hint">Same format. These rotate in order each time she snoozes.</p>
+  <p class="hint">Same format — each line can have its own clip length, e.g. some clips 30 sec, others 45 sec. These rotate in order each time she snoozes.</p>
   <textarea id="s-celebs"></textarea>
 
   <div class="sec">Dad's Google Calendar (iCal URL)</div>
@@ -450,20 +458,26 @@ const DEF_CELEBS = [
 let S = {
   name:         "Nancy",
   interval:     150,          // minutes between reminders
-  pillsMsg:     "Time to take your morning pills.",
+  pillsMsg:     "Time for Nancy's morning pills.",
   family:       DEF_FAMILY,
   celebs:       DEF_CELEBS,
   calUrl:       "",
   dayStarted:   false,        // false = pills overlay showing
   nextAlarmTime: null,        // ms timestamp for next bathroom alarm
+  lastResetDate: "",          // YYYY-M-D of the last day we did the 1 AM reset for
+  clipSeconds:  30,           // length of the chime clip, in seconds
+  duckPercent:  50,           // quiet-loop volume as % of full (50 ≈ -6dB)
 };
 
 let alarmActive   = false;
 let snoozeCount   = 0;
-let snoozeTimer   = null;
 let celebIndex    = 0;
 let audioCtx      = null;
-let alarmInterval = null;
+let masterGain    = null;
+let duckTimer     = null;
+let cycleTimer    = null;
+let clipLoopTimer = null;
+let currentClipSeconds = 30; // length of whichever message's clip is currently playing
 
 /* ══ PERSIST ══════════════════════════════════════════════════ */
 function loadState() {
@@ -500,11 +514,9 @@ function updateClock() {
   document.getElementById("ampm-display").textContent = ampm;
   document.getElementById("date-display").textContent = fmtDate(now);
 
-  // 1 AM overnight reset — wipes the day state, shows pills screen
-  if (h === 1 && m === 0 && s === 0 && S.dayStarted) {
-    resetDay();
-    return;
-  }
+  // Day rollover — robust to the tablet being asleep/idle exactly at 1 AM.
+  // Catches up the moment the app is active again, any time after 1 AM on a new day.
+  checkDayRollover(now);
 
   // Pills not yet confirmed — keep overlay up, no alarm checks
   if (!S.dayStarted) {
@@ -559,11 +571,24 @@ function updateNextBar() {
 }
 
 /* ══ DAY RESET (1 AM) ═════════════════════════════════════════ */
+function dayKey(d) {
+  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+}
+
+// Checked on every clock tick AND at boot, so it catches the rollover
+// no matter when the app happens to be active — not just at exactly 1:00:00.
+function checkDayRollover(now) {
+  const key = dayKey(now);
+  if (now.getHours() >= 1 && S.lastResetDate !== key) {
+    S.lastResetDate = key;
+    resetDay();
+  }
+}
+
 function resetDay() {
   alarmActive = false;
   snoozeCount = 0;
   celebIndex  = 0;
-  clearTimeout(snoozeTimer);
   stopBeep();
   S.dayStarted    = false;
   S.nextAlarmTime = null;
@@ -583,7 +608,7 @@ function showPillsOverlay() {
   document.getElementById("pills-greeting").textContent =
     `Good morning, ${S.name}!`;
   document.getElementById("pills-message").textContent =
-    S.pillsMsg || "Time to take your morning pills.";
+    S.pillsMsg || "Time for Nancy's morning pills.";
   document.getElementById("pills-overlay").classList.add("active");
 }
 
@@ -613,7 +638,6 @@ function iJustWent() {
     alarmActive = false;
     snoozeCount = 0;
     celebIndex  = 0;
-    clearTimeout(snoozeTimer);
     stopBeep();
     document.getElementById("alarm-overlay").classList.remove("active");
   }
@@ -685,15 +709,30 @@ function renderCalEvents(events) {
     </div>`).join("");
 }
 
-/* ══ ALARM LOGIC ══════════════════════════════════════════════ */
+/* ══ ALARM LOGIC ══════════════════════════════════════════════
+   Cycle (repeats every AUDIO_CYCLE_SECONDS = 2:30 until she responds):
+     1. Clip plays once, start to finish, at full volume.
+     2. The instant it ends, the same clip starts looping again,
+        but at the ducked (quiet) volume — never goes silent.
+     3. At the 2:30 mark (measured from when the clip first started),
+        a fresh clip fires at full volume and the cycle repeats,
+        with the message/emoji rotating to the next one in line.
+   Runs indefinitely until "I'm on my way" is pressed.
+═════════════════════════════════════════════════════════════ */
+const AUDIO_CYCLE_SECONDS = 150; // 2 min 30 sec
+
 function triggerAlarm(forcedSnooze) {
   alarmActive = true;
-  clearTimeout(snoozeTimer);
-  stopBeep();
+  if (forcedSnooze !== undefined) snoozeCount = forcedSnooze;
 
-  const sc  = (forcedSnooze !== undefined) ? forcedSnooze : snoozeCount;
-  let   msg;
+  showAlarmMessage(snoozeCount);
+  document.getElementById("alarm-overlay").classList.add("active");
 
+  startAudioCycle();
+}
+
+function showAlarmMessage(sc) {
+  let msg;
   if (sc === 0) {
     const idx = Math.floor(Math.random() * S.family.length);
     msg = S.family[idx] || DEF_FAMILY[0];
@@ -709,20 +748,7 @@ function triggerAlarm(forcedSnooze) {
   document.getElementById("snooze-badge").textContent  =
     sc > 0 ? `Reminder #${sc+1} — ${S.name}, please get up! 🙏` : "";
 
-  document.getElementById("alarm-overlay").classList.add("active");
-  startBeep();
-
-  // Auto-snooze after 60 s if no response
-  snoozeTimer = setTimeout(() => {
-    if (alarmActive) {
-      snoozeCount++;
-      stopAlarmVisuals();
-      snoozeTimer = setTimeout(() => {
-        if (alarmActive) triggerAlarm(snoozeCount);
-        else { snoozeCount = 0; celebIndex = 0; }
-      }, 4 * 60 * 1000);
-    }
-  }, 60 * 1000);
+  currentClipSeconds = msg.dur || S.clipSeconds || 30;
 }
 
 function stopAlarm() {
@@ -730,7 +756,6 @@ function stopAlarm() {
   alarmActive = false;
   snoozeCount = 0;
   celebIndex  = 0;
-  clearTimeout(snoozeTimer);
   stopBeep();
   stopAlarmVisuals();
   S.nextAlarmTime = Date.now() + S.interval * 60 * 1000;
@@ -743,46 +768,82 @@ function stopAlarmVisuals() {
 }
 
 /* ══ SOUND ════════════════════════════════════════════════════ */
-function startBeep() {
-  stopBeep();
-  playChime();
-  alarmInterval = setInterval(playChime, 8000);
+function startAudioCycle() {
+  stopBeep(); // clean slate — closes any prior context/timers
+
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  masterGain = audioCtx.createGain();
+  masterGain.connect(audioCtx.destination);
+  masterGain.gain.value = 1.0; // full volume
+
+  const clipSec = currentClipSeconds || S.clipSeconds || 30;
+
+  // 1. Clip plays once at full volume, starting now.
+  scheduleClip(audioCtx, masterGain, audioCtx.currentTime, clipSec);
+
+  // 2. The moment it ends, drop to quiet and keep looping the same clip.
+  duckTimer = setTimeout(() => {
+    if (!audioCtx) return;
+    const quiet = Math.max(0.05, Math.min(1, (S.duckPercent || 50) / 100));
+    masterGain.gain.linearRampToValueAtTime(quiet, audioCtx.currentTime + 0.3);
+    clipLoopTimer = setInterval(() => {
+      if (audioCtx) scheduleClip(audioCtx, masterGain, audioCtx.currentTime, clipSec);
+    }, clipSec * 1000);
+  }, clipSec * 1000);
+
+  // 3. At the 2:30 mark from THIS clip's start, fire the next full cycle.
+  cycleTimer = setTimeout(() => {
+    if (!alarmActive) return;
+    snoozeCount++;
+    showAlarmMessage(snoozeCount);
+    startAudioCycle(); // full volume again, timers reset, message rotated
+  }, AUDIO_CYCLE_SECONDS * 1000);
 }
 
 function stopBeep() {
-  clearInterval(alarmInterval);
-  alarmInterval = null;
+  clearTimeout(duckTimer);
+  clearTimeout(cycleTimer);
+  clearInterval(clipLoopTimer);
+  duckTimer = cycleTimer = clipLoopTimer = null;
   try { if (audioCtx) { audioCtx.close(); audioCtx = null; } } catch(e){}
+  masterGain = null;
 }
 
-// Full chime — used for alarms
-function playChime() {
+// Schedules one play-through of the chime clip, repeating the motif
+// back-to-back through the given gain node until it fills clipSec seconds.
+function scheduleClip(ctx, gainNode, startTime, clipSec) {
   try {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const notes = [
-      {f:523.25, t:0,   d:0.5},
-      {f:659.25, t:0.55,d:0.5},
-      {f:783.99, t:1.1, d:0.8},
-      {f:659.25, t:2.2, d:0.4},
-      {f:783.99, t:2.7, d:0.6},
+    const motif = [
+      {f:523.25, dt:0,   d:0.5},
+      {f:659.25, dt:0.55,d:0.5},
+      {f:783.99, dt:1.1, d:0.8},
+      {f:659.25, dt:2.2, d:0.4},
+      {f:783.99, dt:2.7, d:0.6},
     ];
-    notes.forEach(({f,t,d}) => {
-      const osc  = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.type = "sine";
-      osc.frequency.value = f;
-      gain.gain.setValueAtTime(0, audioCtx.currentTime+t);
-      gain.gain.linearRampToValueAtTime(0.28, audioCtx.currentTime+t+0.06);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+t+d);
-      osc.start(audioCtx.currentTime+t);
-      osc.stop(audioCtx.currentTime+t+d+0.05);
-    });
+    const motifSpan = 4.0; // motif length + breathing room
+    const reps      = Math.max(1, Math.round((clipSec || 30) / motifSpan));
+
+    for (let r = 0; r < reps; r++) {
+      const base = startTime + r * motifSpan;
+      motif.forEach(({f,dt,d}) => {
+        const osc  = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(gainNode);
+        osc.type = "sine";
+        osc.frequency.value = f;
+        const t0 = base + dt;
+        gain.gain.setValueAtTime(0, t0);
+        gain.gain.linearRampToValueAtTime(0.28, t0 + 0.06);
+        gain.gain.exponentialRampToValueAtTime(0.001, t0 + d);
+        osc.start(t0);
+        osc.stop(t0 + d + 0.05);
+      });
+    }
   } catch(e){}
 }
 
-// Soft single ding — used for "I just went" and pills confirmation
+// Soft single ding — used for "I'm headed to the bathroom now" and pills confirmation
 function playDing() {
   try {
     const ctx  = new (window.AudioContext || window.webkitAudioContext)();
@@ -802,13 +863,23 @@ function playDing() {
 }
 
 /* ══ ADMIN ════════════════════════════════════════════════════ */
+// Formats a message back into its pipe-delimited line for the textarea.
+// Only appends the 4th (duration) field if this message has its own length set.
+function fmtMsgLine(m) {
+  return m.dur
+    ? `${m.emoji}|${m.text}|${m.speaker}|${m.dur}`
+    : `${m.emoji}|${m.text}|${m.speaker}`;
+}
+
 function openAdmin() {
   document.getElementById("s-name").value     = S.name;
   document.getElementById("s-interval").value = S.interval || 150;
-  document.getElementById("s-pillsmsg").value = S.pillsMsg || "Time to take your morning pills.";
+  document.getElementById("s-clipsec").value   = S.clipSeconds || 30;
+  document.getElementById("s-duckpct").value   = S.duckPercent || 50;
+  document.getElementById("s-pillsmsg").value = S.pillsMsg || "Time for Nancy's morning pills.";
   document.getElementById("s-calurl").value   = S.calUrl || "";
-  document.getElementById("s-family").value   = S.family.map(m=>`${m.emoji}|${m.text}|${m.speaker}`).join("\n");
-  document.getElementById("s-celebs").value   = S.celebs.map(m=>`${m.emoji}|${m.text}|${m.speaker}`).join("\n");
+  document.getElementById("s-family").value   = S.family.map(fmtMsgLine).join("\n");
+  document.getElementById("s-celebs").value   = S.celebs.map(fmtMsgLine).join("\n");
   document.getElementById("admin-panel").classList.add("open");
 }
 
@@ -818,14 +889,23 @@ function closeAdmin() {
 
 function saveAdmin() {
   S.name     = document.getElementById("s-name").value.trim() || "Nancy";
-  S.interval = parseInt(document.getElementById("s-interval").value) || 150;
-  S.pillsMsg = document.getElementById("s-pillsmsg").value.trim() || "Time to take your morning pills.";
+  S.interval    = parseInt(document.getElementById("s-interval").value) || 150;
+  S.clipSeconds = parseInt(document.getElementById("s-clipsec").value) || 30;
+  S.duckPercent = parseInt(document.getElementById("s-duckpct").value) || 50;
+  S.pillsMsg = document.getElementById("s-pillsmsg").value.trim() || "Time for Nancy's morning pills.";
   S.calUrl   = document.getElementById("s-calurl").value.trim();
 
   const parseMessages = raw =>
     raw.split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{
       const p = l.split("|");
-      return { emoji:p[0]?.trim()||"🚽", text:p[1]?.trim()||l, speaker:p[2]?.trim()||"" };
+      const durRaw = p[3]?.trim();
+      const dur = durRaw ? parseInt(durRaw) : null;
+      return {
+        emoji:   p[0]?.trim() || "🚽",
+        text:    p[1]?.trim() || l,
+        speaker: p[2]?.trim() || "",
+        dur:     (dur && dur > 0) ? dur : null, // null = use the default clip length
+      };
     });
 
   const fRaw = document.getElementById("s-family").value.trim();
@@ -844,13 +924,20 @@ function saveAdmin() {
 /* ══ BOOT ═════════════════════════════════════════════════════ */
 loadState();
 
+// Wipe any stale overnight state BEFORE deciding what to show —
+// this is what prevents a leftover bathroom alarm from a previous day
+// ever firing instead of the pills screen.
+checkDayRollover(new Date());
+
 // Show pills overlay immediately if day not started
 if (!S.dayStarted) {
   showPillsOverlay();
 }
 
 // If day IS started but we missed the alarm window (e.g. page refreshed),
-// fire the alarm a few seconds after load rather than silently skipping it
+// fire the alarm a few seconds after load rather than silently skipping it.
+// Safe now: checkDayRollover above guarantees dayStarted is only true
+// if pills were actually confirmed for *today*.
 if (S.dayStarted && S.nextAlarmTime && S.nextAlarmTime < Date.now()) {
   setTimeout(() => { snoozeCount=0; celebIndex=0; triggerAlarm(0); }, 3000);
 }
