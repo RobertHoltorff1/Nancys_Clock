@@ -47,7 +47,7 @@ html, body {
 /* ── TOP: CLOCK + BUTTON ── */
 #top-row {
   display:flex;
-  align-items:stretch;
+  align-items:center;
   justify-content:space-between;
   gap: 20px;
 }
@@ -61,8 +61,8 @@ html, body {
 }
 
 #time-display {
-  font-size: 116px;
-  font-weight: 200;
+  font-size: 145px;
+  font-weight: 700;
   letter-spacing: -3px;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -71,7 +71,7 @@ html, body {
 
 #ampm-display {
   font-size: 34px;
-  font-weight: 300;
+  font-weight: 700;
   color: var(--accent);
   letter-spacing: 5px;
   margin-top: -4px;
@@ -79,8 +79,8 @@ html, body {
 }
 
 #date-display {
-  font-size: 26px;
-  font-weight: 300;
+  font-size: 40px;
+  font-weight: 700;
   color: var(--text2);
   margin-top: 6px;
   letter-spacing: 0.5px;
@@ -142,14 +142,16 @@ html, body {
   line-height: 1.4;
 }
 
-/* ── HEADED TO BATHROOM BUTTON — square, matches clock row height ── */
+/* ── HEADED TO BATHROOM BUTTON ──
+   Width & height are set in JS (syncButtonSize) to exactly match the
+   clock's rendered height — far more reliable across browsers than
+   trying to do it with aspect-ratio + flex stretch. */
 #went-btn {
-  aspect-ratio: 1 / 1;
   background: var(--accentd);
   border: 2px solid var(--accent);
   border-radius: 20px;
   color: #fff;
-  font-size: 28px;
+  font-size: 36px;
   font-weight: 700;
   cursor: pointer;
   display:flex;
@@ -159,13 +161,9 @@ html, body {
   padding: 10px;
   line-height: 1.15;
   letter-spacing: 0.2px;
-  flex-shrink: 0;
-  min-width: 0;   /* without this, flex items refuse to shrink below their
-                     unwrapped text width — that's what was blowing the
-                     square up huge and preventing it from wrapping */
-  min-height: 0;
   white-space: normal;
   overflow-wrap: break-word;
+  flex-shrink: 0;
   transition: transform 0.1s, background 0.15s;
 }
 #went-btn:active { transform: scale(0.97); background: var(--accent); color: #000; }
@@ -944,6 +942,21 @@ function saveAdmin() {
   updateCalendar();
 }
 
+/* ══ BUTTON SIZING ════════════════════════════════════════════
+   Measures the clock's actual rendered height and locks the
+   "headed to bathroom" button's width AND height to match it
+   exactly — a square, no bigger than the clock itself. */
+function syncButtonSize() {
+  const clock = document.getElementById("clock-block");
+  const btn   = document.getElementById("went-btn");
+  if (!clock || !btn) return;
+  const h = clock.offsetHeight;
+  if (h > 0) {
+    btn.style.width  = h + "px";
+    btn.style.height = h + "px";
+  }
+}
+
 /* ══ BOOT ═════════════════════════════════════════════════════ */
 loadState();
 
@@ -970,8 +983,17 @@ setInterval(updateClock, 1000);
 updateCalendar();
 setInterval(updateCalendar, 10 * 60 * 1000);
 
+// Measure once now, then again shortly after — fonts can finish loading
+// a beat after first paint, which would otherwise leave the button
+// sized to the wrong (pre-font) clock height.
+syncButtonSize();
+setTimeout(syncButtonSize, 100);
+setTimeout(syncButtonSize, 500);
+window.addEventListener("resize", syncButtonSize);
+window.addEventListener("orientationchange", () => setTimeout(syncButtonSize, 200));
+
 document.addEventListener("visibilitychange", () => {
-  if (!document.hidden) { updateClock(); updateCalendar(); }
+  if (!document.hidden) { updateClock(); updateCalendar(); syncButtonSize(); }
 });
 document.addEventListener("touchstart", ()=>{}, {passive:true});
 </script>
