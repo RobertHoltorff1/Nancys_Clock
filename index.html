@@ -253,32 +253,33 @@ html, body {
 }
 
 #pills-greeting {
-  font-size:62px;
+  font-size:124px;
   font-weight:300;
   color:var(--text);
-  line-height:1.1;
+  line-height:1.05;
 }
 
 #pills-message {
-  font-size:38px;
+  font-size:76px;
   font-weight:300;
   color:var(--text2);
-  line-height:1.4;
-  max-width:680px;
+  line-height:1.2;
+  max-width:900px;
 }
 
 #pills-btn {
   background: var(--blued);
   border: 2px solid var(--blue);
-  border-radius:60px;
+  border-radius:36px;
   color:#fff;
-  font-size:34px;
+  font-size:30px;
   font-weight:400;
-  padding:26px 72px;
+  line-height:1.3;
+  padding:28px 44px;
   cursor:pointer;
   letter-spacing:0.5px;
   transition:transform 0.1s, background 0.15s;
-  min-width:320px;
+  max-width:560px;
   margin-top:8px;
 }
 #pills-btn:active { transform:scale(0.96); background:var(--blue); color:#000; }
@@ -380,7 +381,7 @@ html, body {
   <div id="pills-emoji">💊</div>
   <div id="pills-greeting">Good morning, Nancy!</div>
   <div id="pills-message">Time for Nancy's morning pills.</div>
-  <button id="pills-btn" onclick="confirmPills()">Pills given ✓</button>
+  <button id="pills-btn" onclick="confirmPills()">Press this when all pills have been swallowed</button>
 </div>
 
 <!-- SETTINGS BUTTON -->
