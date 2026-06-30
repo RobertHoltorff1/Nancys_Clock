@@ -39,16 +39,24 @@ html, body {
 #app {
   width:100%; height:100%;
   display:grid;
-  grid-template-rows: auto 1fr auto auto;
+  grid-template-rows: auto 1fr auto;
   padding: 36px 28px 28px;
   gap: 16px;
 }
 
-/* ── TOP: CLOCK ── */
+/* ── TOP: CLOCK + BUTTON ── */
+#top-row {
+  display:flex;
+  align-items:stretch;
+  justify-content:space-between;
+  gap: 20px;
+}
+
 #clock-block {
   display:flex;
   flex-direction:column;
-  align-items:center;
+  align-items:flex-start;
+  justify-content:center;
   gap:0;
 }
 
@@ -67,6 +75,7 @@ html, body {
   color: var(--accent);
   letter-spacing: 5px;
   margin-top: -4px;
+  align-self: center;
 }
 
 #date-display {
@@ -75,6 +84,7 @@ html, body {
   color: var(--text2);
   margin-top: 6px;
   letter-spacing: 0.5px;
+  align-self: center;
 }
 
 /* ── MIDDLE: CALENDAR ── */
@@ -132,20 +142,31 @@ html, body {
   line-height: 1.4;
 }
 
-/* ── I JUST WENT BUTTON ── */
+/* ── HEADED TO BATHROOM BUTTON — square, matches clock row height ── */
 #went-btn {
+  aspect-ratio: 1 / 1;
   background: var(--accentd);
   border: 2px solid var(--accent);
   border-radius: 20px;
   color: #fff;
-  font-size: 30px;
-  font-weight: 400;
-  padding: 22px 20px;
+  font-size: 28px;
+  font-weight: 700;
   cursor: pointer;
-  width: 100%;
-  letter-spacing: 0.3px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding: 10px;
+  line-height: 1.15;
+  letter-spacing: 0.2px;
+  flex-shrink: 0;
+  min-width: 0;   /* without this, flex items refuse to shrink below their
+                     unwrapped text width — that's what was blowing the
+                     square up huge and preventing it from wrapping */
+  min-height: 0;
+  white-space: normal;
+  overflow-wrap: break-word;
   transition: transform 0.1s, background 0.15s;
-  line-height: 1;
 }
 #went-btn:active { transform: scale(0.97); background: var(--accent); color: #000; }
 
@@ -340,11 +361,15 @@ html, body {
 
 <div id="app">
 
-  <!-- CLOCK TOP -->
-  <div id="clock-block">
-    <div id="time-display">12:00</div>
-    <div id="ampm-display">PM</div>
-    <div id="date-display">Saturday, June 20</div>
+  <!-- TOP: CLOCK (left) + BATHROOM BUTTON (right, square) -->
+  <div id="top-row">
+    <div id="clock-block">
+      <div id="time-display">12:00</div>
+      <div id="ampm-display">PM</div>
+      <div id="date-display">Saturday, June 20</div>
+    </div>
+
+    <button id="went-btn" onclick="iJustWent()">🚽 I'm headed to the bathroom now ✓</button>
   </div>
 
   <!-- CALENDAR MIDDLE -->
@@ -354,9 +379,6 @@ html, body {
       <div id="cal-empty">Loading…</div>
     </div>
   </div>
-
-  <!-- I JUST WENT — always visible -->
-  <button id="went-btn" onclick="iJustWent()">🚽 &nbsp;I'm headed to the bathroom now &nbsp;✓</button>
 
   <!-- NEXT REMINDER BOTTOM -->
   <div id="next-bar">
