@@ -19,6 +19,8 @@
   --accentd:#0f6e56;
   --warn:   #ef9f27;
   --red:    #e24b4a;
+  --blue:   #5d9aca;
+  --blued:  #0d3d5c;
   --border: rgba(255,255,255,0.07);
 }
 
@@ -36,10 +38,10 @@ html, body {
 /* ══ MAIN LAYOUT ══════════════════════════════════════════════ */
 #app {
   width:100%; height:100%;
-  display:flex;
-  flex-direction:column;
-  padding: 18px 8px 14px;
-  gap: 7px;
+  display:grid;
+  grid-template-rows: auto 1fr auto auto;
+  padding: 36px 28px 28px;
+  gap: 16px;
 }
 
 /* ── TOP: CLOCK ── */
@@ -48,200 +50,116 @@ html, body {
   flex-direction:column;
   align-items:center;
   gap:0;
-  cursor:pointer;
-  border: 3px solid rgba(255,255,255,0.5);
-  border-radius: 24px;
-  padding: 10px 20px;
-  width: 100%;
-}
-
-#time-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 16px;
 }
 
 #time-display {
-  font-size: 96px;
-  font-weight: 700;
+  font-size: 116px;
+  font-weight: 200;
   letter-spacing: -3px;
   line-height: 1;
   font-variant-numeric: tabular-nums;
-  color: #ffffff;
+  color: var(--text);
 }
 
 #ampm-display {
-  font-size: 56px;
-  font-weight: 700;
+  font-size: 34px;
+  font-weight: 300;
   color: var(--accent);
-  letter-spacing: 2px;
+  letter-spacing: 5px;
+  margin-top: -4px;
 }
 
 #date-display {
-  font-size: 54px;
-  font-weight: 700;
-  color: #ffffff;
-  margin-top: 8px;
+  font-size: 26px;
+  font-weight: 300;
+  color: var(--text2);
+  margin-top: 6px;
   letter-spacing: 0.5px;
-}
-
-/* ── DIVIDER ── */
-#clock-divider {
-  display: none;
 }
 
 /* ── MIDDLE: CALENDAR ── */
 #calendar-block {
-  background: #14243d;
-  border: 3px solid #3d7bbf;
-  border-radius: 24px;
-  padding: 0;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 24px 28px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  gap: 0;
-  overflow-y: auto;
-  flex-shrink: 1;
-  min-height: 0;
+  justify-content: center;
+  gap: 10px;
+  overflow: hidden;
 }
 
 #cal-header {
-  font-size: 52px;
-  font-weight: 800;
+  font-size: 15px;
   text-transform: uppercase;
-  letter-spacing: 2px;
-  color: #cfe8ff;
-  padding: 12px 20px;
-  text-align: center;
-  border-bottom: 2px solid rgba(255,255,255,0.3);
+  letter-spacing: 3px;
+  color: var(--text2);
 }
 
 #cal-events {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 14px;
 }
 
 .cal-event {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 14px 20px;
-  border-bottom: 2px solid rgba(255,255,255,0.15);
-}
-.cal-event:last-child {
-  border-bottom: none;
+  gap: 16px;
 }
 
 .cal-event-time {
-  font-size: 50px;
-  font-weight: 800;
-  color: #5fe8c6;
-  min-width: 176px;
+  font-size: 30px;
+  font-weight: 300;
+  color: var(--accent);
+  min-width: 110px;
   line-height: 1.1;
   flex-shrink: 0;
 }
 
 .cal-event-text {
-  font-size: 54px;
-  font-weight: 700;
-  color: #ffffff;
+  font-size: 34px;
+  font-weight: 300;
+  color: var(--text);
   line-height: 1.2;
 }
 
 #cal-empty {
-  font-size: 52px;
-  font-weight: 700;
-  color: #ffffff;
+  font-size: 32px;
+  font-weight: 300;
+  color: var(--text2);
   line-height: 1.4;
 }
 
+/* ── I JUST WENT BUTTON ── */
+#went-btn {
+  background: var(--accentd);
+  border: 2px solid var(--accent);
+  border-radius: 20px;
+  color: #fff;
+  font-size: 30px;
+  font-weight: 400;
+  padding: 22px 20px;
+  cursor: pointer;
+  width: 100%;
+  letter-spacing: 0.3px;
+  transition: transform 0.1s, background 0.15s;
+  line-height: 1;
+}
+#went-btn:active { transform: scale(0.97); background: var(--accent); color: #000; }
+
 /* ── BOTTOM: NEXT REMINDER ── */
 #next-bar {
-  background: var(--bg3);
-  border: 3px solid rgba(255,255,255,0.5);
-  border-radius: 24px;
   display:flex;
-  flex-direction: row;
-  align-items:center;
-  justify-content:space-between;
-  gap:20px;
-  padding: 16px 48px 16px 24px;
-  margin-top: auto;
-  width: 100%;
-}
-
-#next-right {
-  display:flex;
-  flex-direction:column;
-  align-items:flex-end;
-  gap:0;
-}
-
-#next-label { font-size:62px; color:#ffffff; font-weight:800; text-transform:uppercase; letter-spacing:1px; text-align:center; line-height:0.98; }
-#next-time  { font-size:64px; color:#ffffff; font-weight:800; white-space:nowrap; line-height:1.05; }
-#next-countdown { font-size:58px; color:#5fe8c6; font-weight:800; letter-spacing:2px; text-align:right; font-variant-numeric: tabular-nums; line-height:1.05; }
-
-/* ══ PILL OVERLAY ═════════════════════════════════════════════ */
-#pill-overlay {
-  display:none;
-  position:fixed; inset:0;
-  background:rgba(6,6,14,0.97);
-  z-index:90;
-  flex-direction:column;
   align-items:center;
   justify-content:center;
-  gap:32px;
-  padding:40px 36px;
-  text-align:center;
-}
-#pill-overlay.active { display:flex; }
-
-#pill-emoji { font-size:150px; }
-
-#pill-title {
-  font-size:108px;
-  font-weight:700;
-  color:#ffffff;
-  line-height:1.02;
+  gap:10px;
+  flex-wrap: wrap;
 }
 
-#pill-message {
-  font-size:76px;
-  font-weight:500;
-  color:#ffffff;
-  line-height:1.2;
-  max-width:920px;
-}
-
-#pill-btn {
-  background:var(--accentd);
-  border:none;
-  border-radius:60px;
-  color:#fff;
-  font-size:42px;
-  font-weight:400;
-  padding:32px 80px;
-  cursor:pointer;
-  min-width:380px;
-  margin-top:16px;
-}
-#pill-btn:active { background:var(--accent); color:#000; }
-
-#pill-silence-btn {
-  background:transparent;
-  border:2px solid var(--border);
-  border-radius:40px;
-  color:var(--text2);
-  font-size:26px;
-  font-weight:400;
-  padding:16px 36px;
-  cursor:pointer;
-  margin-bottom:-8px;
-}
-#pill-silence-btn:active { background:var(--bg3); color:var(--text); }
-#pill-silence-btn.silenced { color:var(--accent); border-color:var(--accentd); }
+#next-label { font-size:18px; color:var(--text2); }
+#next-time  { font-size:18px; color:var(--accent); font-weight:500; }
 
 /* ══ ALARM OVERLAY ════════════════════════════════════════════ */
 #alarm-overlay {
@@ -258,17 +176,9 @@ html, body {
 }
 #alarm-overlay.active { display:flex; }
 
-/* Quiet-evening silent visual cue: gently flash the reminder on and off */
-#alarm-overlay.flashing {
-  animation: alarmFlash 1.5s steps(1, end) infinite;
-}
-@keyframes alarmFlash {
-  0%, 55%   { opacity: 1; }
-  55.01%, 100% { opacity: 0.1; }
-}
-
 #alarm-emoji {
-  display:none;
+  font-size:96px;
+  animation:bob 1.4s ease-in-out infinite;
 }
 @keyframes bob {
   0%,100%{transform:translateY(0);}
@@ -276,22 +186,22 @@ html, body {
 }
 
 #alarm-name {
-  font-size:120px;
-  font-weight:700;
+  font-size:64px;
+  font-weight:500;
   color:var(--accent);
   line-height:1;
 }
 
 #alarm-message {
-  font-size:80px;
-  font-weight:500;
-  color:#ffffff;
-  line-height:1.25;
-  max-width:900px;
+  font-size:44px;
+  font-weight:300;
+  color:var(--text);
+  line-height:1.3;
+  max-width:680px;
 }
 
 #alarm-speaker {
-  font-size:40px;
+  font-size:22px;
   color:var(--text2);
   font-style:italic;
   min-height:30px;
@@ -302,25 +212,88 @@ html, body {
   border:none;
   border-radius:60px;
   color:#fff;
-  font-size:52px;
-  font-weight:500;
-  padding:36px 90px;
+  font-size:34px;
+  font-weight:400;
+  padding:26px 72px;
   cursor:pointer;
   letter-spacing:0.5px;
   transition:transform 0.1s, background 0.15s;
-  min-width:420px;
+  min-width:320px;
 }
 #stop-btn:active { transform:scale(0.96); background:var(--accent); color:#000; }
 
 #snooze-badge {
-  font-size:36px;
+  font-size:20px;
   color:var(--warn);
   min-height:28px;
 }
 
+/* ══ PILLS OVERLAY ════════════════════════════════════════════ */
+#pills-overlay {
+  display:none;
+  position:fixed; inset:0;
+  background: #04040e;
+  z-index:150;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:28px;
+  padding:40px 36px;
+  text-align:center;
+}
+#pills-overlay.active { display:flex; }
+
+#pills-emoji {
+  font-size:100px;
+  animation: pulse 2.2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,100%{transform:scale(1);}
+  50%{transform:scale(1.1);}
+}
+
+#pills-greeting {
+  font-size:62px;
+  font-weight:300;
+  color:var(--text);
+  line-height:1.1;
+}
+
+#pills-message {
+  font-size:38px;
+  font-weight:300;
+  color:var(--text2);
+  line-height:1.4;
+  max-width:680px;
+}
+
+#pills-btn {
+  background: var(--blued);
+  border: 2px solid var(--blue);
+  border-radius:60px;
+  color:#fff;
+  font-size:34px;
+  font-weight:400;
+  padding:26px 72px;
+  cursor:pointer;
+  letter-spacing:0.5px;
+  transition:transform 0.1s, background 0.15s;
+  min-width:320px;
+  margin-top:8px;
+}
+#pills-btn:active { transform:scale(0.96); background:var(--blue); color:#000; }
+
 /* ══ ADMIN ════════════════════════════════════════════════════ */
 #admin-btn {
-  display:none;
+  position:fixed; bottom:14px; right:18px;
+  background:transparent;
+  border:1px solid var(--border);
+  border-radius:8px;
+  color:var(--text2);
+  font-size:13px;
+  padding:6px 12px;
+  cursor:pointer;
+  z-index:50;
 }
 
 #admin-panel {
@@ -340,7 +313,7 @@ html, body {
 .sec { font-size:12px; text-transform:uppercase; letter-spacing:2.5px; color:var(--text2); margin-top:8px; }
 
 #admin-panel input[type=text],
-#admin-panel input[type=time],
+#admin-panel input[type=number],
 #admin-panel textarea {
   width:100%;
   background:var(--bg3);
@@ -353,23 +326,11 @@ html, body {
 }
 #admin-panel textarea { height:120px; resize:vertical; font-size:14px; line-height:1.5; }
 
-#times-list { display:flex; flex-wrap:wrap; gap:8px; }
-.t-tag {
-  background:var(--bg3);
-  border:1px solid var(--border);
-  border-radius:8px;
-  color:var(--accent);
-  padding:6px 10px;
-  font-size:15px;
-  display:flex; align-items:center; gap:6px;
-}
-.t-tag button { background:none; border:none; color:var(--red); font-size:17px; cursor:pointer; padding:0; line-height:1; }
-
-.row { display:flex; gap:10px; align-items:center; }
+.row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
 
 .btn-save  { background:var(--accentd); border:none; border-radius:12px; color:#fff; font-size:19px; padding:16px; cursor:pointer; width:100%; }
 .btn-close { background:var(--bg3); border:1px solid var(--border); border-radius:12px; color:var(--text2); font-size:17px; padding:14px; cursor:pointer; width:100%; }
-.btn-test  { background:#2a1f00; border:1px solid var(--warn2, #ba7517); border-radius:10px; color:var(--warn); font-size:15px; padding:10px 18px; cursor:pointer; }
+.btn-test  { background:#2a1f00; border:1px solid #ba7517; border-radius:10px; color:var(--warn); font-size:15px; padding:10px 18px; cursor:pointer; }
 
 .hint { font-size:12px; color:var(--text2); line-height:1.5; }
 </style>
@@ -379,32 +340,27 @@ html, body {
 <div id="app">
 
   <!-- CLOCK TOP -->
-  <div id="clock-block" onclick="handleClockTap()">
-    <div id="time-row">
-      <div id="time-display">12:00</div>
-      <div id="ampm-display">PM</div>
-    </div>
+  <div id="clock-block">
+    <div id="time-display">12:00</div>
+    <div id="ampm-display">PM</div>
     <div id="date-display">Saturday, June 20</div>
   </div>
 
-  <!-- DIVIDER -->
-  <div id="clock-divider"></div>
-
   <!-- CALENDAR MIDDLE -->
   <div id="calendar-block">
-    <div id="cal-header">Today's Schedule:</div>
+    <div id="cal-header">Dad's Schedule Today</div>
     <div id="cal-events">
       <div id="cal-empty">Loading…</div>
     </div>
   </div>
 
+  <!-- I JUST WENT — always visible -->
+  <button id="went-btn" onclick="iJustWent()">🚽 &nbsp;I just went to the bathroom &nbsp;✓</button>
+
   <!-- NEXT REMINDER BOTTOM -->
   <div id="next-bar">
-    <span id="next-label">Next pee<br>break</span>
-    <div id="next-right">
-      <span id="next-time">—</span>
-      <div id="next-countdown"></div>
-    </div>
+    <span id="next-label">Next bathroom reminder:</span>
+    <span id="next-time">—</span>
   </div>
 
 </div>
@@ -415,17 +371,16 @@ html, body {
   <div id="alarm-name">Nancy!</div>
   <div id="alarm-message">Time to take a bathroom break.</div>
   <div id="alarm-speaker"></div>
-  <button id="stop-btn" onclick="stopAlarm()">Tap when heading to bathroom</button>
+  <button id="stop-btn" onclick="stopAlarm()">I'm on my way ✓</button>
   <div id="snooze-badge"></div>
 </div>
 
-<!-- PILL OVERLAY -->
-<div id="pill-overlay">
-  <div id="pill-emoji">💊</div>
-  <div id="pill-title">Good Morning!</div>
-  <div id="pill-message">Time for Nancy's morning pills.</div>
-  <button id="pill-silence-btn" onclick="silencePillGong()">🔕 Silence reminder for this task</button>
-  <button id="pill-btn" onclick="pillsTaken()">Tap when all pills are swallowed</button>
+<!-- PILLS OVERLAY — shows from 1 AM until pills confirmed -->
+<div id="pills-overlay">
+  <div id="pills-emoji">💊</div>
+  <div id="pills-greeting">Good morning, Nancy!</div>
+  <div id="pills-message">Time to take your morning pills.</div>
+  <button id="pills-btn" onclick="confirmPills()">I took my pills ✓</button>
 </div>
 
 <!-- SETTINGS BUTTON -->
@@ -438,14 +393,19 @@ html, body {
   <div class="sec">Her name</div>
   <input type="text" id="s-name" value="Nancy">
 
-  <div class="sec">Reminder interval</div>
-  <p class="hint">Timer resets to 2.5 hours every time Nancy presses "I'm on my way ✓".</p>
+  <div class="sec">Reminder interval (minutes)</div>
+  <p class="hint">How many minutes between bathroom reminders. Default: 150 (= 2½ hours). The timer resets each time she presses "I just went" or dismisses an alarm.</p>
+  <input type="number" id="s-interval" value="150" min="30" max="480">
 
-  <div class="sec">Family alarm messages — shown FIRST each reminder cycle</div>
+  <div class="sec">Morning pills message</div>
+  <p class="hint">Shown on the overnight screen until she confirms she took her pills.</p>
+  <input type="text" id="s-pillsmsg" placeholder="Time to take your morning pills.">
+
+  <div class="sec">Family alarm messages — shown on first alarm each cycle</div>
   <p class="hint">One per line. Format: emoji | message text | who is speaking<br>Example: 👨 | Nancy, time to go pee! | — Dad</p>
   <textarea id="s-family"></textarea>
 
-  <div class="sec">Celebrity snooze messages — shown on 2nd, 3rd, 4th snooze</div>
+  <div class="sec">Celebrity snooze messages — shown on 2nd, 3rd, 4th reminder</div>
   <p class="hint">Same format. These rotate in order each time she snoozes.</p>
   <textarea id="s-celebs"></textarea>
 
@@ -455,29 +415,21 @@ html, body {
 
   <div class="sec">Test</div>
   <div class="row">
-    <button class="btn-test" onclick="triggerAlarm(0)">▶ Test first alarm</button>
-    <button class="btn-test" onclick="triggerAlarm(1)">▶ Test 1st snooze</button>
-    <button class="btn-test" onclick="triggerAlarm(2)">▶ Test 2nd snooze</button>
+    <button class="btn-test" onclick="triggerAlarm(0)">▶ Test bathroom alarm</button>
+    <button class="btn-test" onclick="triggerAlarm(1)">▶ Test snooze alarm</button>
+  </div>
+  <div class="row" style="margin-top:8px">
+    <button class="btn-test" onclick="testPillsScreen()">▶ Test pills screen</button>
+    <button class="btn-test" onclick="doResetDay()">↺ Reset to morning</button>
   </div>
 
-  <div class="sec">🔒 Lock the iPad (Guided Access)</div>
-  <p class="hint" style="line-height:1.8">
-    1. Go to <strong>Settings → Accessibility → Guided Access</strong> → turn ON<br>
-    2. Tap <strong>Passcode Settings</strong> → set a passcode<br>
-    3. Open Nancy's Clock in Safari<br>
-    4. Triple-click the <strong>side button</strong> (or home button on older iPad)<br>
-    5. Tap <strong>Start</strong> — the home button is now disabled<br>
-    <br>
-    To exit Guided Access: triple-click side button → enter passcode → tap End
-  </p>
-
   <div style="height:8px"></div>
-  <button class="btn-save" onclick="saveAdmin()">Save & Close</button>
+  <button class="btn-save" onclick="saveAdmin()">Save &amp; Close</button>
   <button class="btn-close" onclick="closeAdmin()">Cancel</button>
 </div>
 
 <script>
-/* ══ DEFAULT CONTENT ══════════════════════════════════════════ */
+/* ══ DEFAULT MESSAGES ═════════════════════════════════════════ */
 const DEF_FAMILY = [
   { emoji:"👨", text:"Nancy, time to take a bathroom break!", speaker:"— Dad" },
   { emoji:"👦", text:"Mom, go to the bathroom — we love you!", speaker:"— Your son" },
@@ -495,494 +447,252 @@ const DEF_CELEBS = [
 ];
 
 /* ══ STATE ════════════════════════════════════════════════════ */
-const RESET_MS = 2.5 * 60 * 60 * 1000; // 2.5 hours
-
-// 30-second song snippet that plays when "all pills swallowed" is tapped.
-// Upload the MP3 to the GitHub repo (e.g. pills.mp3) and it serves from here.
-// ── Pill reminder songs — rotate through these as you upload them ──
-// Name each file with its title so you can tell them apart, e.g.
-//   pill1-waiting-for-the-man.mp3
-const PILL_SONGS = [
-  "/pill1-waiting-for-the-man.mp3",
-];
-
-// ── Pee break alarm songs — rotate through these as you upload them ──
-// Filenames are CASE-SENSITIVE and must match GitHub exactly.
-const PEE_SONGS = [
-  "/pp1-get-up-and-go.mp3",            // Rutles
-  "/pp2-pee-machine-sex-machine.mp3",  // James Brown "P Machine" edit
-];
-
 let S = {
-  name: "Nancy",
-  family: DEF_FAMILY,
-  celebs: DEF_CELEBS,
-  calUrl: "https://calendar.google.com/calendar/ical/7ef26e43ec5fa67ca57c7923853ee32dcd832c030216b6393500fa57ee696df1%40group.calendar.google.com/private-71c90932688a1632f35fc7420669a5cf/basic.ics",
-  nextAlarmAt: null, // timestamp (ms) of next scheduled alarm
+  name:         "Nancy",
+  interval:     150,          // minutes between reminders
+  pillsMsg:     "Time to take your morning pills.",
+  family:       DEF_FAMILY,
+  celebs:       DEF_CELEBS,
+  calUrl:       "",
+  dayStarted:   false,        // false = pills overlay showing
+  nextAlarmTime: null,        // ms timestamp for next bathroom alarm
 };
 
 let alarmActive   = false;
 let snoozeCount   = 0;
 let snoozeTimer   = null;
-let mainTimer     = null;
 let celebIndex    = 0;
 let audioCtx      = null;
 let alarmInterval = null;
-let dismissTimer  = null;
 
 /* ══ PERSIST ══════════════════════════════════════════════════ */
 function loadState() {
   try {
-    const d = localStorage.getItem("nc2");
-    if (d) {
-      const saved = JSON.parse(d);
-      S.name      = saved.name      || S.name;
-      S.calUrl    = saved.calUrl    || S.calUrl;
-      S.family    = saved.family    || S.family;
-      S.celebs    = saved.celebs    || S.celebs;
-      S.nextAlarmAt = saved.nextAlarmAt || null;
+    // Try v3 key first
+    const d3 = localStorage.getItem("nc3");
+    if (d3) { S = {...S, ...JSON.parse(d3)}; return; }
+    // Migrate settings from v2 key (keeps name, messages, calUrl — drops old times array)
+    const d2 = localStorage.getItem("nc2");
+    if (d2) {
+      const old = JSON.parse(d2);
+      S = {...S, ...old};
+      delete S.times; // no longer used
+      saveState();
     }
   } catch(e){}
 }
+
 function saveState() {
-  try { localStorage.setItem("nc2", JSON.stringify(S)); } catch(e){}
+  try { localStorage.setItem("nc3", JSON.stringify(S)); } catch(e){}
 }
 
 /* ══ CLOCK ════════════════════════════════════════════════════ */
 function updateClock() {
-  const now = new Date();
-  const h   = now.getHours();
-  const m   = now.getMinutes();
-  const h12 = h % 12 || 12;
-  const ampm= h >= 12 ? "PM" : "AM";
+  const now  = new Date();
+  const h    = now.getHours();
+  const m    = now.getMinutes();
+  const s    = now.getSeconds();
+  const h12  = h % 12 || 12;
+  const ampm = h >= 12 ? "PM" : "AM";
 
   document.getElementById("time-display").textContent =
     `${h12}:${String(m).padStart(2,"0")}`;
   document.getElementById("ampm-display").textContent = ampm;
   document.getElementById("date-display").textContent = fmtDate(now);
 
+  // 1 AM overnight reset — wipes the day state, shows pills screen
+  if (h === 1 && m === 0 && s === 0 && S.dayStarted) {
+    resetDay();
+    return;
+  }
+
+  // Pills not yet confirmed — keep overlay up, no alarm checks
+  if (!S.dayStarted) {
+    document.getElementById("pills-overlay").classList.add("active");
+    updateNextBar();
+    return;
+  }
+
+  document.getElementById("pills-overlay").classList.remove("active");
+
+  // Fire alarm when the timestamp arrives
+  if (!alarmActive && S.nextAlarmTime && Date.now() >= S.nextAlarmTime) {
+    snoozeCount = 0;
+    celebIndex  = 0;
+    S.nextAlarmTime = null;
+    saveState();
+    triggerAlarm(0);
+  }
+
   updateNextBar();
 }
 
 function fmtDate(d) {
   const days   = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-  const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const months = ["January","February","March","April","May","June","July","August",
+                  "September","October","November","December"];
   return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}`;
 }
 
-// Three time zones for reminders:
-//   10 AM – 10 PM  → "normal": song plays, screen PERSISTS until she taps
-//   10 PM –  1 AM  → "visual": NO sound, screen flashes ~10 min, then reverts
-//    1 AM – 10 AM  → full silence: nothing fires at all, just the clock
-function isFullSilence() {
-  const h = new Date().getHours();
-  return h >= 1 && h < 10; // 1 AM – 10 AM
-}
-function alarmMode() {
-  const h = new Date().getHours();
-  if (h >= 22 || h < 1) return 'visual'; // 10 PM – 1 AM
-  return 'normal';                        // 10 AM – 10 PM
-}
-
 function updateNextBar() {
-  const timeEl      = document.getElementById("next-time");
-  const countdownEl = document.getElementById("next-countdown");
+  const label = document.getElementById("next-label");
+  const time  = document.getElementById("next-time");
 
-  if (!S.nextAlarmAt) {
-    timeEl.textContent = "—";
-    countdownEl.textContent = "";
+  if (!S.dayStarted) {
+    label.textContent = "Take pills first —";
+    time.textContent  = "then reminders start";
     return;
   }
 
-  const t    = new Date(S.nextAlarmAt);
-  const h    = t.getHours();
-  const h12  = h % 12 || 12;
-  const ampm = h >= 12 ? "PM" : "AM";
-  const mm   = String(t.getMinutes()).padStart(2,"0");
-  timeEl.textContent = `${h12}:${mm} ${ampm}`;
-
-  // Live countdown HH:MM:SS — ticks every second
-  const diff = S.nextAlarmAt - Date.now();
-  if (diff > 0) {
-    const totalSec = Math.floor(diff / 1000);
-    const hrs  = Math.floor(totalSec / 3600);
-    const mins = Math.floor((totalSec % 3600) / 60);
-    const secs = totalSec % 60;
-    const pad  = n => String(n).padStart(2,"0");
-    countdownEl.textContent = `${hrs}:${pad(mins)}:${pad(secs)}`;
+  if (S.nextAlarmTime) {
+    const d   = new Date(S.nextAlarmTime);
+    const h   = d.getHours();
+    const mm  = d.getMinutes();
+    const h12 = h % 12 || 12;
+    const ap  = h >= 12 ? "PM" : "AM";
+    label.textContent = "Next bathroom reminder:";
+    time.textContent  = `${h12}:${String(mm).padStart(2,"0")} ${ap}`;
   } else {
-    countdownEl.textContent = "any moment now";
-  }
-
-  // During full silence (1 AM – 10 AM) nothing fires
-  if (isFullSilence()) {
-    countdownEl.textContent = "No reminders until 10:00 AM";
+    label.textContent = "Next bathroom reminder:";
+    time.textContent  = "—";
   }
 }
 
-/* ── Schedule the main alarm timer ── */
-function scheduleNextAlarm() {
-  clearTimeout(mainTimer);
-  if (!S.nextAlarmAt) return;
-  const delay = S.nextAlarmAt - Date.now();
-  if (delay <= 0) {
-    // Overdue — fire unless we're in the 1 AM–10 AM full-silence window
-    if (!isFullSilence()) {
-      snoozeCount = 0; celebIndex = 0; triggerAlarm(0);
-    } else {
-      // Full silence — push to 10 AM
-      const next10 = new Date();
-      next10.setHours(10, 0, 0, 0);
-      if (next10 <= new Date()) next10.setDate(next10.getDate() + 1);
-      S.nextAlarmAt = next10.getTime();
-      saveState();
-      scheduleNextAlarm();
-    }
-  } else {
-    mainTimer = setTimeout(() => {
-      if (!isFullSilence()) {
-        snoozeCount = 0; celebIndex = 0; triggerAlarm(0);
-      } else {
-        // Full silence — push to 10 AM
-        const next10 = new Date();
-        next10.setHours(10, 0, 0, 0);
-        if (next10 <= new Date()) next10.setDate(next10.getDate() + 1);
-        S.nextAlarmAt = next10.getTime();
-        saveState();
-        scheduleNextAlarm();
-        updateNextBar();
-      }
-    }, delay);
-  }
-}
-
-/* ── Called once on boot and after each dismissal ── */
-function resetAlarmTimer() {
-  S.nextAlarmAt = Date.now() + RESET_MS;
+/* ══ DAY RESET (1 AM) ═════════════════════════════════════════ */
+function resetDay() {
+  alarmActive = false;
+  snoozeCount = 0;
+  celebIndex  = 0;
+  clearTimeout(snoozeTimer);
+  stopBeep();
+  S.dayStarted    = false;
+  S.nextAlarmTime = null;
   saveState();
-  scheduleNextAlarm();
+  document.getElementById("alarm-overlay").classList.remove("active");
+  showPillsOverlay();
+}
+
+function doResetDay() {
+  // Called from settings test button
+  closeAdmin();
+  resetDay();
+}
+
+/* ══ PILLS OVERLAY ════════════════════════════════════════════ */
+function showPillsOverlay() {
+  document.getElementById("pills-greeting").textContent =
+    `Good morning, ${S.name}!`;
+  document.getElementById("pills-message").textContent =
+    S.pillsMsg || "Time to take your morning pills.";
+  document.getElementById("pills-overlay").classList.add("active");
+}
+
+function confirmPills() {
+  S.dayStarted    = true;
+  S.nextAlarmTime = Date.now() + S.interval * 60 * 1000;
+  saveState();
+  document.getElementById("pills-overlay").classList.remove("active");
   updateNextBar();
+  playDing(); // gentle confirmation sound
+}
+
+function testPillsScreen() {
+  closeAdmin();
+  S.dayStarted = false;
+  showPillsOverlay();
+}
+
+/* ══ I JUST WENT ══════════════════════════════════════════════ */
+function iJustWent() {
+  // Reset the countdown from right now
+  S.nextAlarmTime = Date.now() + S.interval * 60 * 1000;
+  saveState();
+
+  // If alarm was active, dismiss it cleanly
+  if (alarmActive) {
+    alarmActive = false;
+    snoozeCount = 0;
+    celebIndex  = 0;
+    clearTimeout(snoozeTimer);
+    stopBeep();
+    document.getElementById("alarm-overlay").classList.remove("active");
+  }
+
+  updateNextBar();
+  playDing();
 }
 
 /* ══ CALENDAR ══════════════════════════════════════════════════ */
 function updateCalendar() {
-  if (!S.calUrl) {
-    showCalPlaceholder();
-    return;
-  }
+  if (!S.calUrl) { showCalPlaceholder(); return; }
   fetchCal();
 }
 
 function showCalPlaceholder() {
   document.getElementById("cal-events").innerHTML =
     `<div id="cal-empty" style="font-size:30px;font-weight:300;color:var(--text2);line-height:1.5">
-      Kim's schedule will appear here<br>once his Google Calendar is connected.
+      Dad's schedule will appear here<br>once his Google Calendar is connected.
     </div>`;
 }
 
 async function fetchCal() {
-  const cacheBust = Date.now();
-  const proxyUrl = `/api/proxy?cb=${cacheBust}&url=${encodeURIComponent(S.calUrl)}`;
-  const calEl = document.getElementById("cal-events");
-  calEl.innerHTML = '<div id="cal-empty" style="font-size:20px">Fetching...</div>';
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000);
-    let r;
-    try {
-      r = await fetch(proxyUrl, { cache: 'no-store' });
-    } catch(fetchErr) {
-      clearTimeout(timeoutId);
-      throw new Error('Fetch failed: ' + fetchErr.message);
-    }
-    clearTimeout(timeoutId);
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const text = await r.text();
-    if (!text || !text.includes('BEGIN:VCALENDAR')) throw new Error('Bad data: ' + text.slice(0,50));
-    const events = parseIcal(text);
-    renderCalEvents(events);
-    scheduleEveningPills(events);
+    const url = `https://api.allorigins.win/get?url=${encodeURIComponent(S.calUrl)}`;
+    const r   = await fetch(url);
+    const d   = await r.json();
+    renderCalEvents(parseIcal(d.contents));
   } catch(e) {
-    calEl.innerHTML = `<div id="cal-empty" style="font-size:20px">ERR: ${e.message}</div>`;
+    document.getElementById("cal-events").innerHTML =
+      `<div id="cal-empty" style="font-size:26px;color:var(--text2)">Couldn't reach calendar right now.</div>`;
   }
 }
 
 function parseIcal(text) {
   if (!text) return [];
-
-  const now      = new Date();
-  const today    = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const tomorrow = new Date(today); tomorrow.setDate(today.getDate()+1);
-
-  function toYMD(d) {
-    return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
-  }
-  const todayYMD    = toYMD(today);
-  const tomorrowYMD = toYMD(tomorrow);
-
-  // Unfold iCal lines (lines can be wrapped with CRLF + space)
-  text = text.replace(/\r\n[ \t]/g, '').replace(/\r/g, '');
-
-  const events = [];
-  const blocks = text.split("BEGIN:VEVENT").slice(1);
-
+  const today    = new Date();
+  const yyyymmdd = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,"0")}${String(today.getDate()).padStart(2,"0")}`;
+  const events   = [];
+  const blocks   = text.split("BEGIN:VEVENT").slice(1);
   for (const b of blocks) {
-    const sum = b.match(/^SUMMARY[^:]*:(.+)$/m);
-    if (!sum) continue;
-    const title = sum[1].trim();
-    // Filter out personal reminders not meant for Nancy
-    if (/\brob\b/i.test(title)) continue;
-
-    const dtStartMatch = b.match(/^DTSTART([^:]*):(.+)$/m);
-    const dtEndMatch   = b.match(/^DTEND([^:]*):(.+)$/m);
-    if (!dtStartMatch) continue;
-
-    const startParams = dtStartMatch[1]; // e.g. ;TZID=America/Chicago or ;VALUE=DATE
-    const startVal    = dtStartMatch[2].trim();
-    const endVal      = dtEndMatch ? dtEndMatch[2].trim() : "";
-
-    let startYMD = startVal.replace(/T.*/, '').replace(/-/g,'').slice(0,8);
-    const endYMD   = endVal.replace(/T.*/, '').replace(/-/g,'').slice(0,8);
-
-    // All-day events: DTSTART;VALUE=DATE:YYYYMMDD
-    const isAllDay = startParams.includes('VALUE=DATE') || !startVal.includes('T');
-
-    // Parse time FIRST and correct the date for UTC events BEFORE any date checks
+    const sum = b.match(/SUMMARY[^:]*:([^\r\n]+)/);
+    const dt  = b.match(/DTSTART[^:]*:(\d{8})/);
+    if (!sum || !dt || !dt[1].startsWith(yyyymmdd)) continue;
     let timeStr = "";
-    const tMatch = startVal.match(/T(\d{2})(\d{2})/);
-    if (tMatch && !isAllDay) {
-      let h = parseInt(tMatch[1]);
-      const m = tMatch[2];
-      let displayH = h;
-
-      if (startVal.endsWith('Z')) {
-        // UTC — convert both time AND date to local
-        const utcDate = new Date(Date.UTC(
-          parseInt(startYMD.slice(0,4)),
-          parseInt(startYMD.slice(4,6))-1,
-          parseInt(startYMD.slice(6,8)),
-          h,
-          parseInt(m)
-        ));
-        displayH = utcDate.getHours();
-        startYMD = toYMD(utcDate);  // correct the date NOW
-      }
-      const h12 = displayH % 12 || 12;
-      const ap  = displayH >= 12 ? "PM" : "AM";
-      timeStr = `${h12}:${m} ${ap}`;
+    const dtFull = b.match(/DTSTART[^:]*:(\d{8}T\d{6})/);
+    if (dtFull) {
+      const raw = dtFull[1];
+      const h   = parseInt(raw.slice(9,11));
+      const m   = raw.slice(11,13);
+      const h12 = h%12||12;
+      const ap  = h>=12?"PM":"AM";
+      timeStr   = `${h12}:${m} ${ap}`;
     }
-
-    // NOW do date checks with corrected startYMD
-    // Multi-day ONLY for all-day events spanning multiple calendar days.
-    // A timed event (has a time) is never treated as multi-day even if it
-    // crosses midnight, so dinners/appointments show with their time.
-    let isMultiDay = false;
-    if (isAllDay && endYMD) {
-      // all-day DTEND is exclusive; multi-day if it spans 2+ days
-      const dayAfterStart = String(parseInt(startYMD)+1).padStart(8,'0');
-      isMultiDay = endYMD > dayAfterStart;
-    }
-
-    const spansToday = isMultiDay && startYMD <= todayYMD && endYMD > todayYMD;
-    const startsToday = startYMD === todayYMD;
-    const startsTomorrow = startYMD === tomorrowYMD;
-
-    // Multi-day spanning today
-    if (spansToday) {
-      const endDate = new Date(
-        parseInt(endYMD.slice(0,4)),
-        parseInt(endYMD.slice(4,6))-1,
-        parseInt(endYMD.slice(6,8))
-      );
-      // For all-day events, end is exclusive so subtract 1 day
-      if (isAllDay) endDate.setDate(endDate.getDate()-1);
-      const daysLeft = Math.ceil((endDate - today) / 86400000);
-      // Day of week of the return day (the day after the trip ends)
-      const returnDate = new Date(today);
-      returnDate.setDate(today.getDate() + Math.max(daysLeft, 0));
-      const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-      const returnDOW = dayNames[returnDate.getDay()];
-      const suffix = daysLeft <= 0 ? "back today"
-                   : daysLeft === 1 ? `back tomorrow - ${returnDOW}`
-                   : `back in ${daysLeft} days - ${returnDOW}`;
-      events.push({ time: "", text: title, multiDay: true, suffix });
-      continue;
-    }
-
-    // Today's events
-    if (startsToday) {
-      events.push({ time: timeStr || (isAllDay ? "" : ""), text: title, multiDay: false });
-      continue;
-    }
-
-    // Tomorrow preview — only show after noon today
-    if (startsTomorrow) {
-      const currentHour = now.getHours();
-      if (currentHour >= 12) {
-        // Calculate countdown to event
-        const eventDate = new Date(
-          parseInt(startYMD.slice(0,4)),
-          parseInt(startYMD.slice(4,6))-1,
-          parseInt(startYMD.slice(6,8))
-        );
-        if (tMatch && !isAllDay) {
-          let h = parseInt(tMatch[1]);
-          const m = parseInt(tMatch[2]);
-          if (startVal.endsWith('Z')) {
-            const utcDate = new Date(Date.UTC(
-              parseInt(startYMD.slice(0,4)),
-              parseInt(startYMD.slice(4,6))-1,
-              parseInt(startYMD.slice(6,8)),
-              h, m
-            ));
-            eventDate.setTime(utcDate.getTime());
-          } else {
-            eventDate.setHours(h, m, 0, 0);
-          }
-        } else {
-          // All day — set to 8 AM tomorrow
-          eventDate.setHours(8, 0, 0, 0);
-        }
-        const diffMs   = eventDate - now;
-        const diffHrs  = Math.floor(diffMs / 3600000);
-        const diffMins = Math.floor((diffMs % 3600000) / 60000);
-        const countdown = diffHrs > 0 ? `in ${diffHrs} hr ${diffMins} min` : `in ${diffMins} min`;
-        events.push({ time: "Tomorrow", text: title, preview: true, multiDay: false, countdown });
-      }
-    }
+    events.push({ time: timeStr, text: sum[1].trim() });
   }
-
-  events.sort((a,b) => {
-    if (a.preview && !b.preview) return 1;
-    if (!a.preview && b.preview) return -1;
-    if (a.multiDay && !b.multiDay) return -1;
-    if (!a.multiDay && b.multiDay) return 1;
-    return (a.time||"").localeCompare(b.time||"");
-  });
-
   return events;
-}
-
-// Show events exactly as written — no prefix added
-// Whoever enters the event writes it the way Nancy should read it
-function smartPrefix(text) {
-  return text;
 }
 
 function renderCalEvents(events) {
   const el = document.getElementById("cal-events");
   if (!events.length) {
-    el.innerHTML = `<div id="cal-empty">Nothing on the schedule today.</div>`;
+    el.innerHTML = `<div style="font-size:32px;font-weight:300;color:var(--text2)">Dad has nothing scheduled — he's home.</div>`;
     return;
   }
-  el.innerHTML = events.map(e => {
-    if (e.multiDay) {
-      // Multi-day: "All day" label + text, with countdown on its own line below
-      return `
-        <div class="cal-event">
-          <div class="cal-event-time">All day</div>
-          <div class="cal-event-text" style="flex:1">
-            ${smartPrefix(e.text)}
-            <div style="font-size:48px;color:#dcf1ff;font-weight:700;line-height:1.05;margin-top:2px">(${e.suffix})</div>
-          </div>
-        </div>`;
-    }
-    if (e.preview) {
-      return `
-        <div class="cal-event">
-          <div class="cal-event-text" style="flex:1">
-            <span style="color:#7dd8f0">Tomorrow: </span>${smartPrefix(e.text)}
-            ${e.countdown ? `<span style="font-size:36px;color:#7dd8f0;font-weight:400"> · ${e.countdown}</span>` : ''}
-          </div>
-        </div>`;
-    }
-    return `
-      <div class="cal-event">
-        <div class="cal-event-time">${fmtTimeSmall(e.time) || "All day"}</div>
-        <div class="cal-event-text">${smartPrefix(e.text)}</div>
-      </div>`;
-  }).join("");
+  el.innerHTML = events.map(e => `
+    <div class="cal-event">
+      <div class="cal-event-time">${e.time||"All day"}</div>
+      <div class="cal-event-text">${e.text}</div>
+    </div>`).join("");
 }
 
-// Render "7:30 PM" with the AM/PM butted up and smaller
-function fmtTimeSmall(timeStr) {
-  if (!timeStr) return "";
-  return timeStr.replace(/\s*(AM|PM)/i, '<span style="font-size:0.55em;font-weight:500"> $1</span>');
-}
-
-/* ── Evening pill reminder ── */
-let eveningPillTimer = null;
-
-let eveningPillsGiven = false;
-
-function timeStrToMins(timeStr) {
-  // "7:30 PM" -> minutes since midnight
-  const m = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
-  if (!m) return null;
-  let h = parseInt(m[1]);
-  const min = parseInt(m[2]);
-  const pm = /PM/i.test(m[3]);
-  if (pm && h !== 12) h += 12;
-  if (!pm && h === 12) h = 0;
-  return h * 60 + min;
-}
-
-function scheduleEveningPills(events) {
-  clearTimeout(eveningPillTimer);
-  const now = new Date();
-
-  // Find the evening meal: a timed event between 4:00 PM and 8:30 PM today.
-  // Whatever the meal is called (chicken caesar, butter noodles, dinner...),
-  // the latest such event is treated as dinner.
-  let dinnerMins = 18 * 60; // default 6:00 PM if no evening meal found
-  let foundMeal = false;
-  for (const e of events) {
-    if (e.time && !e.preview && !e.multiDay) {
-      const mins = timeStrToMins(e.time);
-      if (mins !== null && mins >= 16*60 && mins <= 20.5*60) {
-        dinnerMins = mins;
-        foundMeal = true;
-      }
-    }
-  }
-
-  const pillMins = dinnerMins - 5;       // 5 minutes before the meal
-  const nowMins  = now.getHours() * 60 + now.getMinutes();
-  const delay    = (pillMins - nowMins) * 60 * 1000;
-
-  if (delay > 0) {
-    eveningPillTimer = setTimeout(() => {
-      if (!eveningPillsGiven) showEveningPills();
-    }, delay);
-  }
-}
-
-function showEveningPills() {
-  if (eveningPillsGiven) return;
-  document.getElementById("pill-emoji").textContent = "💊";
-  document.getElementById("pill-title").textContent = "Evening Pills";
-  document.getElementById("pill-message").textContent =
-    "Time for Nancy's evening pills — dinner is almost ready!";
-  // Reuse the pill overlay but mark it as the evening one
-  const overlay = document.getElementById("pill-overlay");
-  const wasActive = overlay.classList.contains("active");
-  overlay.classList.add("active", "evening");
-  if (!wasActive && !pillGongSilenced) startPillGong();
-}
-
-/* ══ ALARM LOGIC ══════════════════════════════════════════════
-   snoozeCount 0  →  use family messages (round-robin)
-   snoozeCount 1+ →  use celeb messages (round-robin)
-═════════════════════════════════════════════════════════════ */
+/* ══ ALARM LOGIC ══════════════════════════════════════════════ */
 function triggerAlarm(forcedSnooze) {
   alarmActive = true;
   clearTimeout(snoozeTimer);
   stopBeep();
 
-  const mode = alarmMode(); // 'normal' (day) or 'visual' (10 PM–1 AM)
-
-  const sc = (forcedSnooze !== undefined) ? forcedSnooze : snoozeCount;
-  let msg;
+  const sc  = (forcedSnooze !== undefined) ? forcedSnooze : snoozeCount;
+  let   msg;
 
   if (sc === 0) {
     const idx = Math.floor(Math.random() * S.family.length);
@@ -992,65 +702,40 @@ function triggerAlarm(forcedSnooze) {
     celebIndex++;
   }
 
+  document.getElementById("alarm-emoji").textContent   = msg.emoji || "🚽";
   document.getElementById("alarm-name").textContent    = S.name + "!";
   document.getElementById("alarm-message").textContent = msg.text;
   document.getElementById("alarm-speaker").textContent = msg.speaker || "";
-
-  document.getElementById("snooze-badge").textContent =
+  document.getElementById("snooze-badge").textContent  =
     sc > 0 ? `Reminder #${sc+1} — ${S.name}, please get up! 🙏` : "";
 
-  const overlay = document.getElementById("alarm-overlay");
-  overlay.classList.add("active");
-
-  if (mode === 'visual') {
-    // ── QUIET EVENING (10 PM – 1 AM): silent, flashing screen for 10 minutes ──
-    // No song. If nobody taps within 10 min, revert and re-arm on the 2.5-hr
-    // rhythm (so a night owl still gets nudged, but it won't flash all night).
-    overlay.classList.add("flashing");
-    stopBeep();
-    snoozeTimer = setTimeout(() => {
-      if (alarmActive) {
-        alarmActive = false;
-        snoozeCount = 0; celebIndex = 0;
-        overlay.classList.remove("flashing");
-        stopAlarmVisuals();
-        S.nextAlarmAt = Date.now() + RESET_MS; // next visual nudge in 2.5 hr
-        saveState();
-        scheduleNextAlarm();
-        updateNextBar();
-      }
-    }, 10 * 60 * 1000); // flash for 10 minutes
-    return;
-  }
-
-  // ── NORMAL DAYTIME (10 AM – 10 PM): song + PERSISTENT screen until tapped ──
-  overlay.classList.remove("flashing");
+  document.getElementById("alarm-overlay").classList.add("active");
   startBeep();
-  // Stop the sound after 60s, but KEEP the screen and button up the whole time.
+
+  // Auto-snooze after 60 s if no response
   snoozeTimer = setTimeout(() => {
-    if (alarmActive) stopBeep();
-    // Replay the song every 2.5 min while she still hasn't tapped.
-    // The screen never auto-dismisses — only her button press clears it.
-    snoozeTimer = setTimeout(() => {
-      if (alarmActive) {
-        snoozeCount++;
-        triggerAlarm(snoozeCount);
-      }
-    }, 2.5 * 60 * 1000);
+    if (alarmActive) {
+      snoozeCount++;
+      stopAlarmVisuals();
+      snoozeTimer = setTimeout(() => {
+        if (alarmActive) triggerAlarm(snoozeCount);
+        else { snoozeCount = 0; celebIndex = 0; }
+      }, 4 * 60 * 1000);
+    }
   }, 60 * 1000);
 }
 
 function stopAlarm() {
+  // She confirmed — set the next alarm 2.5 hrs from now
   alarmActive = false;
   snoozeCount = 0;
   celebIndex  = 0;
   clearTimeout(snoozeTimer);
-  clearTimeout(dismissTimer);
   stopBeep();
-  document.getElementById("alarm-overlay").classList.remove("flashing");
   stopAlarmVisuals();
-  // Reset 2.5-hour countdown from right now
-  resetAlarmTimer();
+  S.nextAlarmTime = Date.now() + S.interval * 60 * 1000;
+  saveState();
+  updateNextBar();
 }
 
 function stopAlarmVisuals() {
@@ -1058,97 +743,8 @@ function stopAlarmVisuals() {
 }
 
 /* ══ SOUND ════════════════════════════════════════════════════ */
-let peeAudio   = null;
-let peeQueue   = [];
-let peeLast    = null;
-
-// Fisher-Yates shuffle
-function shuffle(arr) {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-// Shuffle-through: play every song once in random order, then reshuffle.
-// Avoids repeating the same song back-to-back across the reshuffle seam.
-function nextFromQueue(list, queueRef, lastKey) {
-  if (!list.length) return null;
-  if (queueRef.q.length === 0) {
-    queueRef.q = shuffle(list);
-    if (list.length > 1 && queueRef.q[0] === queueRef.last) {
-      queueRef.q.push(queueRef.q.shift());
-    }
-  }
-  const song = queueRef.q.shift();
-  queueRef.last = song;
-  return song;
-}
-
-const peeQ  = { q: [], last: null };
-
 function startBeep() {
   stopBeep();
-  if (PEE_SONGS.length && playPeeSong()) {
-    // A song is playing — no repeating chime needed.
-  } else {
-    startChimeFallback();
-  }
-}
-
-function playPeeSong() {
-  if (!PEE_SONGS.length) return false;
-  try {
-    if (!peeAudio) peeAudio = new Audio();   // reuse the SAME element (stays unlocked)
-    peeAudio.pause();
-    peeAudio.muted = false;
-    peeAudio.volume = 0.95;
-    peeAudio.src = nextFromQueue(PEE_SONGS, peeQ);
-    peeAudio.currentTime = 0;
-    // If the file is missing or the browser blocks playback, fall back to the chime.
-    peeAudio.onerror = () => startChimeFallback();
-    const p = peeAudio.play();
-    if (p && p.catch) p.catch(() => startChimeFallback());
-    return true;
-  } catch(e) { return false; }
-}
-
-function stopPeeSong() {
-  try { if (peeAudio) { peeAudio.pause(); peeAudio.currentTime = 0; } } catch(e){}
-}
-
-/* ── iOS audio unlock ──
-   iOS Safari blocks audio that starts on a timer unless it's been "unlocked"
-   by a real finger tap. On the first tap anywhere, we silently play (muted)
-   the reusable audio element to bless it, so timer-fired alarms can play later. */
-let audioPrimed = false;
-function primeAudio() {
-  if (audioPrimed) return;
-  try {
-    if (!peeAudio) peeAudio = new Audio();
-    peeAudio.muted = true;
-    if (PEE_SONGS.length) peeAudio.src = PEE_SONGS[0];
-    const p = peeAudio.play();
-    if (p && p.then) {
-      p.then(() => {
-        peeAudio.pause(); peeAudio.currentTime = 0; peeAudio.muted = false;
-        audioPrimed = true;
-      }).catch(() => { peeAudio.muted = false; });
-    } else {
-      peeAudio.pause(); peeAudio.muted = false; audioPrimed = true;
-    }
-  } catch(e){}
-  // Also wake the Web Audio context used by the fallback chime
-  try {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-  } catch(e){}
-}
-
-function startChimeFallback() {
-  if (alarmInterval) return; // already chiming
   playChime();
   alarmInterval = setInterval(playChime, 8000);
 }
@@ -1156,10 +752,10 @@ function startChimeFallback() {
 function stopBeep() {
   clearInterval(alarmInterval);
   alarmInterval = null;
-  stopPeeSong();
   try { if (audioCtx) { audioCtx.close(); audioCtx = null; } } catch(e){}
 }
 
+// Full chime — used for alarms
 function playChime() {
   try {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1186,13 +782,8 @@ function playChime() {
   } catch(e){}
 }
 
-/* ── Gentle recurring gong for the pill overlay ──
-   A soft, low, barely-audible single tone every 5 minutes until tapped.
-   Uses its own short-lived audio context so it never clashes with the
-   pee-break alarm sound. */
-let pillChimeInterval = null;
-
-function playGentleGong() {
+// Soft single ding — used for "I just went" and pills confirmation
+function playDing() {
   try {
     const ctx  = new (window.AudioContext || window.webkitAudioContext)();
     const osc  = ctx.createOscillator();
@@ -1200,63 +791,24 @@ function playGentleGong() {
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.type = "sine";
-    osc.frequency.value = 196.00; // low G — soft and warm
+    osc.frequency.value = 880;
     gain.gain.setValueAtTime(0, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.07, ctx.currentTime + 0.12); // quiet peak
-    gain.gain.exponentialRampToValueAtTime(0.0008, ctx.currentTime + 2.6);
+    gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + 0.04);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
     osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 2.7);
-    setTimeout(() => { try { ctx.close(); } catch(e){} }, 3200);
+    osc.stop(ctx.currentTime + 0.55);
+    osc.onended = () => ctx.close();
   } catch(e){}
-}
-
-function startPillGong() {
-  stopPillGong();
-  playGentleGong();
-  pillChimeInterval = setInterval(playGentleGong, 5 * 60 * 1000); // every 5 min
-}
-
-function stopPillGong() {
-  clearInterval(pillChimeInterval);
-  pillChimeInterval = null;
-}
-
-/* ── Reward song when pills are confirmed swallowed ── */
-let pillAudio = null;
-const pillQ  = { q: [], last: null };
-
-function playPillSong() {
-  if (!PILL_SONGS.length) return;
-  try {
-    if (pillAudio) { pillAudio.pause(); pillAudio = null; }
-    const url = nextFromQueue(PILL_SONGS, pillQ);
-    pillAudio = new Audio(url);
-    pillAudio.volume = 0.9;
-    // Tapping the button counts as a user gesture, so Safari allows playback.
-    pillAudio.play().catch(() => {});
-  } catch(e) {}
-}
-
-function stopPillSong() {
-  try { if (pillAudio) { pillAudio.pause(); pillAudio = null; } } catch(e) {}
-}
-
-let pillGongSilenced = false;
-
-function silencePillGong() {
-  // Stop the gong but keep the reminder on screen so it still works
-  pillGongSilenced = true;
-  stopPillGong();
-  const btn = document.getElementById("pill-silence-btn");
-  if (btn) { btn.textContent = "🔕 Reminder silenced"; btn.classList.add("silenced"); }
 }
 
 /* ══ ADMIN ════════════════════════════════════════════════════ */
 function openAdmin() {
-  document.getElementById("s-name").value   = S.name;
-  document.getElementById("s-calurl").value = S.calUrl||"";
-  document.getElementById("s-family").value = S.family.map(m=>`${m.emoji}|${m.text}|${m.speaker}`).join("\n");
-  document.getElementById("s-celebs").value = S.celebs.map(m=>`${m.emoji}|${m.text}|${m.speaker}`).join("\n");
+  document.getElementById("s-name").value     = S.name;
+  document.getElementById("s-interval").value = S.interval || 150;
+  document.getElementById("s-pillsmsg").value = S.pillsMsg || "Time to take your morning pills.";
+  document.getElementById("s-calurl").value   = S.calUrl || "";
+  document.getElementById("s-family").value   = S.family.map(m=>`${m.emoji}|${m.text}|${m.speaker}`).join("\n");
+  document.getElementById("s-celebs").value   = S.celebs.map(m=>`${m.emoji}|${m.text}|${m.speaker}`).join("\n");
   document.getElementById("admin-panel").classList.add("open");
 }
 
@@ -1265,8 +817,10 @@ function closeAdmin() {
 }
 
 function saveAdmin() {
-  S.name   = document.getElementById("s-name").value.trim() || "Nancy";
-  S.calUrl = document.getElementById("s-calurl").value.trim();
+  S.name     = document.getElementById("s-name").value.trim() || "Nancy";
+  S.interval = parseInt(document.getElementById("s-interval").value) || 150;
+  S.pillsMsg = document.getElementById("s-pillsmsg").value.trim() || "Time to take your morning pills.";
+  S.calUrl   = document.getElementById("s-calurl").value.trim();
 
   const parseMessages = raw =>
     raw.split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{
@@ -1281,121 +835,35 @@ function saveAdmin() {
 
   saveState();
   closeAdmin();
+  // Update pills greeting in case name changed
+  document.getElementById("pills-greeting").textContent = `Good morning, ${S.name}!`;
+  document.getElementById("pills-message").textContent  = S.pillsMsg;
   updateCalendar();
 }
 
-
-
-/* ══ PILL OVERLAY LOGIC ═══════════════════════════════════════ */
-let morningPillTimer = null;
-let pillsGivenToday  = false;
-
-function showMorningPills() {
-  if (pillsGivenToday) return;
-  const h = new Date().getHours();
-  if (h < 8 || h >= 13) return; // only show 8 AM to 1 PM
-  const overlay = document.getElementById("pill-overlay");
-  const wasActive = overlay.classList.contains("active");
-  document.getElementById("pill-emoji").textContent = "💊";
-  document.getElementById("pill-title").textContent = "Good Morning!";
-  document.getElementById("pill-message").textContent =
-    "Good morning, Nancy — time for your pills.";
-  overlay.classList.add("active");
-  if (!wasActive && !pillGongSilenced) startPillGong(); // gentle gong, repeats every 5 min
-}
-
-function pillsTaken() {
-  const overlay = document.getElementById("pill-overlay");
-  const isEvening = overlay.classList.contains("evening");
-  overlay.classList.remove("active", "evening");
-  stopPillGong();
-  playPillSong(); // 🎵 reward snippet plays on tap
-  pillGongSilenced = false;
-  const sbtn = document.getElementById("pill-silence-btn");
-  if (sbtn) { sbtn.textContent = "🔕 Silence reminder for this task"; sbtn.classList.remove("silenced"); }
-  if (isEvening) {
-    // Evening pills — just dismiss, don't reset the bathroom timer
-    eveningPillsGiven = true;
-  } else {
-    // Morning pills — start the bathroom countdown from right now
-    pillsGivenToday = true;
-    resetAlarmTimer();
-  }
-}
-
-function scheduleMorningPills() {
-  clearTimeout(morningPillTimer);
-  const now  = new Date();
-  const pill = new Date();
-  pill.setHours(8, 0, 0, 0);
-  if (pill <= now) {
-    // Already past 8 AM — show if pills not given and before 1 PM
-    const h = now.getHours();
-    if (!pillsGivenToday && h >= 8 && h < 13) showMorningPills();
-    return;
-  }
-  morningPillTimer = setTimeout(() => {
-    showMorningPills();
-  }, pill - now);
-}
-
-// Reset pillsGivenToday at midnight
-function scheduleMidnightReset() {
-  const now  = new Date();
-  const next = new Date();
-  next.setHours(24, 0, 0, 0);
-  setTimeout(() => {
-    pillsGivenToday = false;
-    eveningPillsGiven = false;
-    scheduleMorningPills();
-    scheduleMidnightReset();
-  }, next - now);
-}
-
-/* ══ 5-TAP TO OPEN SETTINGS ══════════════════════════════════ */
-let tapCount = 0;
-let tapTimer = null;
-
-function handleClockTap() {
-  if (alarmActive) return; // don't interfere with alarm
-  tapCount++;
-  clearTimeout(tapTimer);
-  if (tapCount >= 5) {
-    tapCount = 0;
-    openAdmin();
-  } else {
-    // Reset count if no tap within 2 seconds
-    tapTimer = setTimeout(() => { tapCount = 0; }, 2000);
-  }
-}
-
-/* ══ BOOT ══════════════════════════════════════════════════ */
+/* ══ BOOT ═════════════════════════════════════════════════════ */
 loadState();
 
-// If no saved alarm time, set first one for 2.5 hours from now
-if (!S.nextAlarmAt || S.nextAlarmAt < Date.now()) {
-  S.nextAlarmAt = Date.now() + RESET_MS;
-  saveState();
+// Show pills overlay immediately if day not started
+if (!S.dayStarted) {
+  showPillsOverlay();
 }
 
-scheduleNextAlarm();
-scheduleMorningPills();
-scheduleMidnightReset();
+// If day IS started but we missed the alarm window (e.g. page refreshed),
+// fire the alarm a few seconds after load rather than silently skipping it
+if (S.dayStarted && S.nextAlarmTime && S.nextAlarmTime < Date.now()) {
+  setTimeout(() => { snoozeCount=0; celebIndex=0; triggerAlarm(0); }, 3000);
+}
+
 updateClock();
 setInterval(updateClock, 1000);
 updateCalendar();
-setInterval(updateCalendar, 10*60*1000);
+setInterval(updateCalendar, 10 * 60 * 1000);
 
-document.addEventListener("visibilitychange", ()=>{
-  if (!document.hidden) {
-    updateClock();
-    updateCalendar();
-    // Re-schedule in case timer was lost while app was backgrounded
-    scheduleNextAlarm();
-  }
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) { updateClock(); updateCalendar(); }
 });
-document.addEventListener("touchstart", primeAudio, { passive: true });
-document.addEventListener("click", primeAudio);
+document.addEventListener("touchstart", ()=>{}, {passive:true});
 </script>
 </body>
 </html>
