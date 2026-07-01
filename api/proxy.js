@@ -1,45 +1,31 @@
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+// api/proxy.js — Vercel serverless function
+// Fetches the Google Calendar iCal URL server-side, bypassing CORS restrictions.
+// Deployed automatically by Vercel when this file is in the /api folder.
 
+export default async function handler(req, res) {
   const { url } = req.query;
   if (!url) {
-    return res.status(400).send('Missing url parameter');
+    return res.status(400).send('Missing ?url= parameter');
   }
 
-  // Try up to 3 times with increasing timeouts
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), attempt * 5000);
-      
-      const response = await fetch(decodeURIComponent(url), {
-        signal: controller.signal,
-        headers: { 'User-Agent': 'NancysClock/1.0' }
-      });
-      
-      clearTimeout(timeout);
-      
-      if (!response.ok) {
-        if (attempt < 3) continue;
-        return res.status(response.status).send('Upstream error');
-      }
-      
-      const text = await response.text();
-      res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
-      res.setHeader('Cache-Control', 'no-cache');
-      return res.status(200).send(text);
-      
-    } catch (e) {
-      if (attempt === 3) {
-        return res.status(500).send('Proxy error after 3 attempts: ' + e.message);
-      }
-      // Wait briefly before retry
-      await new Promise(r => setTimeout(r, 1000 * attempt));
-    }
+  try {
+    const target = decodeURIComponent(url);
+    const r = await fetch(target, {
+      headers: {
+        // Mimic a real browser so Google doesn't block the request
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/calendar, text/plain, */*',
+      },
+    });
+
+    const text = await r.text();
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 'no-store, no-cache');
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.status(r.status).send(text);
+
+  } catch (e) {
+    res.status(500).send('Proxy error: ' + e.message);
   }
 }
