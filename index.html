@@ -100,7 +100,7 @@ html, body {
   font-size: 74px;
   font-weight: 700;
   color: #ffffff;
-  margin-bottom: 6px;
+  margin-bottom: -10px;
   letter-spacing: 0.5px;
 }
 
@@ -223,7 +223,7 @@ html, body {
   margin-bottom:8px;
 }
 
-#next-label { font-size:78px; color:#ffffff; font-weight:800; text-transform:uppercase; letter-spacing:1px; text-align:center; line-height:0.98; display:flex; flex-direction:column; justify-content:center; }
+#next-label { font-size:78px; color:#ffffff; font-weight:800; text-transform:uppercase; letter-spacing:1px; text-align:center; line-height:0.98; display:flex; flex-direction:column; justify-content:flex-start; margin-top:-4px; }
 #next-time  { font-size:82px; color:#ffffff; font-weight:800; white-space:nowrap; line-height:1.0; }
 #next-countdown { font-size:74px; color:#5fe8c6; font-weight:800; letter-spacing:2px; text-align:right; font-variant-numeric: tabular-nums; line-height:1.0; }
 
@@ -432,7 +432,7 @@ html, body {
         </div>
         <div id="date-display">Wednesday, July 1</div>
       </div>
-      <button id="headed-btn" onclick="headedNow(); event.stopPropagation();">🚽<br>I'm headed<br>now</button>
+      <button id="headed-btn" onclick="headedNow(); event.stopPropagation();"><span style="font-size:58px;line-height:1.1">🚽</span><br>I'm headed<br>now</button>
     </div>
   </div>
 
