@@ -95,7 +95,7 @@ html, body {
 #date-display {
   font-size: 66px;
   font-weight: 700;
-  color: #ffffff;
+  color: #ff4444;
   margin-top: 0;
   letter-spacing: 0.5px;
 }
