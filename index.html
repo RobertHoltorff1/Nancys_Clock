@@ -50,7 +50,7 @@ html, body {
   cursor: pointer;
   border: 3px solid rgba(255,255,255,0.5);
   border-radius: 24px;
-  padding: 10px 20px;
+  padding: 4px 20px 6px;
   width: 100%;
 }
 
@@ -96,7 +96,7 @@ html, body {
   font-size: 57px;
   font-weight: 700;
   color: #ffffff;
-  margin-top: 4px;
+  margin-top: 0;
   letter-spacing: 0.5px;
 }
 
@@ -721,31 +721,42 @@ function showCalPlaceholder() {
 }
 
 async function fetchCal() {
-  const cacheBust = Date.now();
-  const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(S.calUrl)}&nocache=${cacheBust}`;
   const calEl = document.getElementById("cal-events");
   calEl.innerHTML = '<div id="cal-empty" style="font-size:20px">Fetching...</div>';
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000);
-    let r;
+
+  // Try each proxy in order; stop on first success
+  const PROXIES = [
+    {
+      url: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}&nocache=${Date.now()}`,
+      parse: async r => { const j = await r.json(); return j.contents; }
+    },
+    {
+      url: u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+      parse: async r => r.text()
+    },
+  ];
+
+  let lastErr = 'No proxies tried';
+  for (const proxy of PROXIES) {
     try {
-      r = await fetch(proxyUrl, { cache: 'no-store' });
-    } catch(fetchErr) {
-      clearTimeout(timeoutId);
-      throw new Error('Fetch failed: ' + fetchErr.message);
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), 15000);
+      const r = await fetch(proxy.url(S.calUrl), { cache: 'no-store', signal: controller.signal });
+      clearTimeout(tid);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const text = await proxy.parse(r);
+      if (!text || !text.includes('BEGIN:VCALENDAR')) throw new Error('Bad data');
+      const events = parseIcal(text);
+      renderCalEvents(events);
+      scheduleEveningPills(events);
+      return; // success — stop trying
+    } catch(e) {
+      lastErr = e.message;
+      // fall through to next proxy
     }
-    clearTimeout(timeoutId);
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const json = await r.json();
-    const text = json.contents;
-    if (!text || !text.includes('BEGIN:VCALENDAR')) throw new Error('Bad data: ' + (text||'').slice(0,50));
-    const events = parseIcal(text);
-    renderCalEvents(events);
-    scheduleEveningPills(events);
-  } catch(e) {
-    calEl.innerHTML = `<div id="cal-empty" style="font-size:20px">ERR: ${e.message}</div>`;
   }
+
+  calEl.innerHTML = `<div id="cal-empty" style="font-size:20px">Calendar unavailable (${lastErr})</div>`;
 }
 
 function parseIcal(text) {
