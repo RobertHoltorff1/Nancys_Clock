@@ -44,23 +44,29 @@ html, body {
 
 /* ── TOP: CLOCK ── */
 #clock-block {
-  display:flex;
-  flex-direction:column;
-  align-items:stretch;
-  gap:0;
-  cursor:pointer;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  cursor: pointer;
   border: 3px solid rgba(255,255,255,0.5);
   border-radius: 24px;
   padding: 10px 20px;
   width: 100%;
 }
 
-#clock-top-row {
+#clock-inner {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: stretch;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
+}
+
+#clock-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
 }
 
 #time-row {
@@ -71,7 +77,7 @@ html, body {
 }
 
 #time-display {
-  font-size: 96px;
+  font-size: 112px;
   font-weight: 700;
   letter-spacing: -3px;
   line-height: 1;
@@ -80,17 +86,17 @@ html, body {
 }
 
 #ampm-display {
-  font-size: 56px;
+  font-size: 60px;
   font-weight: 700;
   color: var(--accent);
   letter-spacing: 2px;
 }
 
 #date-display {
-  font-size: 62px;
+  font-size: 57px;
   font-weight: 700;
   color: #ffffff;
-  margin-top: 2px;
+  margin-top: 4px;
   letter-spacing: 0.5px;
 }
 
@@ -101,12 +107,16 @@ html, body {
   color: #fff;
   font-size: 30px;
   font-weight: 700;
-  padding: 18px 22px;
+  padding: 14px 20px;
   cursor: pointer;
   white-space: nowrap;
   line-height: 1.3;
   flex-shrink: 0;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   transition: transform 0.1s, background 0.15s;
 }
 #headed-btn:active { background:#c45580; transform:scale(0.96); }
@@ -405,14 +415,16 @@ html, body {
 
   <!-- CLOCK TOP -->
   <div id="clock-block" onclick="handleClockTap()">
-    <div id="clock-top-row">
-      <div id="time-row">
-        <div id="time-display">12:00</div>
-        <div id="ampm-display">PM</div>
+    <div id="clock-inner">
+      <div id="clock-left">
+        <div id="time-row">
+          <div id="time-display">12:00</div>
+          <div id="ampm-display">PM</div>
+        </div>
+        <div id="date-display">Wednesday, July 1</div>
       </div>
       <button id="headed-btn" onclick="headedNow(); event.stopPropagation();">🚽<br>I'm headed<br>now</button>
     </div>
-    <div id="date-display">Wednesday, July 1</div>
   </div>
 
   <!-- DIVIDER -->
@@ -1153,23 +1165,25 @@ function stopPeeSong() {
    by a real finger tap. On the first tap anywhere, we silently play (muted)
    the reusable audio element to bless it, so timer-fired alarms can play later. */
 let audioPrimed = false;
+// Minimal silent WAV (44 bytes, 0 samples) — safe to play for iOS audio unlock
+const SILENT_WAV = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
 function primeAudio() {
   if (audioPrimed) return;
+  audioPrimed = true;
+  // Unlock the HTMLAudio pipeline using a truly silent clip (never the real pee song)
   try {
     if (!peeAudio) peeAudio = new Audio();
-    peeAudio.muted = true;
-    if (PEE_SONGS.length) peeAudio.src = PEE_SONGS[0];
+    peeAudio.volume = 0;
+    peeAudio.src = SILENT_WAV;
     const p = peeAudio.play();
-    if (p && p.then) {
-      p.then(() => {
-        peeAudio.pause(); peeAudio.currentTime = 0; peeAudio.muted = false;
-        audioPrimed = true;
-      }).catch(() => { peeAudio.muted = false; });
-    } else {
-      peeAudio.pause(); peeAudio.muted = false; audioPrimed = true;
-    }
+    if (p) p.then(() => {
+      peeAudio.pause();
+      peeAudio.currentTime = 0;
+      peeAudio.volume = 0.95;
+      peeAudio.src = ''; // cleared; real src set when alarm fires
+    }).catch(() => { peeAudio.volume = 0.95; });
   } catch(e){}
-  // Also wake the Web Audio context used by the fallback chime
+  // Also unlock the Web Audio context used by the chime fallback
   try {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === 'suspended') audioCtx.resume();
