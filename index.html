@@ -724,8 +724,14 @@ async function fetchCal() {
   const calEl = document.getElementById("cal-events");
   calEl.innerHTML = '<div id="cal-empty" style="font-size:20px">Fetching...</div>';
 
-  // Try each proxy in order; stop on first success
+  // Try each proxy in order; stop on first success.
+  // /api/proxy is our own Vercel function — most reliable.
+  // Public proxies are last-resort fallbacks only.
   const PROXIES = [
+    {
+      url: u => `/api/proxy?url=${encodeURIComponent(u)}&nocache=${Date.now()}`,
+      parse: async r => r.text()
+    },
     {
       url: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}&nocache=${Date.now()}`,
       parse: async r => { const j = await r.json(); return j.contents; }
