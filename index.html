@@ -50,7 +50,7 @@ html, body {
   cursor: pointer;
   border: 3px solid rgba(255,255,255,0.5);
   border-radius: 24px;
-  padding: 4px 20px 6px;
+  padding: 1px 16px 2px;
   width: 100%;
 }
 
@@ -95,7 +95,7 @@ html, body {
 #date-display {
   font-size: 66px;
   font-weight: 700;
-  color: #ff4444;
+  color: #ffffff;
   margin-top: 0;
   letter-spacing: 0.5px;
 }
@@ -858,9 +858,10 @@ function parseIcal(text) {
       // Day of week of the return day (the day after the trip ends)
       const returnDate = new Date(today);
       returnDate.setDate(today.getDate() + Math.max(daysLeft, 0));
-      const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-      const dayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-      const returnStr = `${dayNames[returnDate.getDay()]}, ${months[returnDate.getMonth()]} ${returnDate.getDate()}`;
+      const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+      const mm = returnDate.getMonth() + 1;
+      const dd = returnDate.getDate();
+      const returnStr = `${dayNames[returnDate.getDay()]} ${mm}/${dd}`;
       const suffix = daysLeft <= 0 ? "ends today"
                    : daysLeft === 1 ? `1 more day · ${returnStr}`
                    : `${daysLeft} more days · ${returnStr}`;
