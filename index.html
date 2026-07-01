@@ -97,7 +97,7 @@ html, body {
 }
 
 #date-display {
-  font-size: 74px;
+  font-size: 78px;
   font-weight: 700;
   color: #ffffff;
   line-height: 1;
@@ -113,8 +113,9 @@ html, body {
   color: #fff;
   font-size: 30px;
   font-weight: 700;
-  padding: 10px 20px;
+  padding: 0 20px;
   align-self: center;
+  gap: 14px;
   height: 170px;
   cursor: pointer;
   white-space: nowrap;
@@ -229,7 +230,7 @@ html, body {
 
 #next-label { font-size:82px; color:#ffffff; font-weight:800; text-transform:uppercase; letter-spacing:1px; text-align:center; line-height:0.98; display:flex; flex-direction:column; justify-content:space-between; margin-top:-2px; margin-bottom:-4px; }
 #next-time  { font-size:86px; color:#ffffff; font-weight:800; white-space:nowrap; line-height:1.0; }
-#next-countdown { font-size:78px; color:#5fe8c6; font-weight:800; letter-spacing:2px; text-align:right; font-variant-numeric: tabular-nums; line-height:1.0; }
+#next-countdown { font-size:86px; color:#5fe8c6; font-weight:800; letter-spacing:2px; text-align:right; font-variant-numeric: tabular-nums; line-height:1.0; }
 
 /* ══ PILL OVERLAY ═════════════════════════════════════════════ */
 #pill-overlay {
@@ -436,7 +437,7 @@ html, body {
         </div>
         <div id="date-display">Wednesday, July 1</div>
       </div>
-      <button id="headed-btn" onclick="headedNow(); event.stopPropagation();"><span style="font-size:58px;line-height:1.1">🚽</span><br>I'm headed<br>now</button>
+      <button id="headed-btn" onclick="headedNow(); event.stopPropagation();"><span style="font-size:58px;line-height:1;display:block">🚽</span><span style="line-height:1.25;display:block">I'm headed<br>now</span></button>
     </div>
   </div>
 
