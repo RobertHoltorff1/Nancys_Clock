@@ -47,11 +47,13 @@ html, body {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  height: 200px;
   cursor: pointer;
   border: 3px solid rgba(255,255,255,0.5);
   border-radius: 24px;
-  padding: 1px 16px 2px;
+  padding: 0 16px;
   width: 100%;
+  overflow: hidden;
 }
 
 #clock-inner {
@@ -93,7 +95,7 @@ html, body {
 }
 
 #date-display {
-  font-size: 66px;
+  font-size: 60px;
   font-weight: 700;
   color: #ffffff;
   margin-top: 0;
@@ -202,7 +204,8 @@ html, body {
   align-items:center;
   justify-content:space-between;
   gap:20px;
-  padding: 8px 24px 8px 20px;
+  height: 165px;
+  padding: 0 24px 0 20px;
   margin-top: auto;
   width: 100%;
 }
@@ -605,8 +608,8 @@ function updateClock() {
 }
 
 function fmtDate(d) {
-  const days   = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-  const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const days   = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}`;
 }
 
