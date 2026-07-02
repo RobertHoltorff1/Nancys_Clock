@@ -511,6 +511,14 @@ html, body {
   <div class="sec">Reminder interval</div>
   <p class="hint">Timer resets to 2.5 hours every time Nancy presses "I'm on my way ✓".</p>
 
+  <div class="sec">Next pee break — manual override</div>
+  <p class="hint" id="s-nextbreak-status">Currently set for —</p>
+  <div class="row">
+    <input type="time" id="s-nextbreak-time" style="flex:1">
+    <button class="btn-test" style="background:var(--accentd);border-color:var(--accent);color:#fff" onclick="setNextBreakTime()">Set</button>
+  </div>
+  <p class="hint">Pick the clock time her next reminder should fire and tap Set. Applies right away — use this to correct the countdown if it ever gets reset unexpectedly.</p>
+
   <div class="sec">Family alarm messages — shown FIRST each reminder cycle</div>
   <p class="hint">One per line. Format: emoji | message text | who is speaking<br>Example: 👨 | Nancy, time to go pee! | — Dad</p>
   <textarea id="s-family"></textarea>
@@ -1433,7 +1441,43 @@ function openAdmin() {
   document.getElementById("s-calurl").value = S.calUrl||"";
   document.getElementById("s-family").value = S.family.map(m=>`${m.emoji}|${m.text}|${m.speaker}`).join("\n");
   document.getElementById("s-celebs").value = S.celebs.map(m=>`${m.emoji}|${m.text}|${m.speaker}`).join("\n");
+  if (S.nextAlarmAt) {
+    const t = new Date(S.nextAlarmAt);
+    document.getElementById("s-nextbreak-time").value =
+      `${String(t.getHours()).padStart(2,"0")}:${String(t.getMinutes()).padStart(2,"0")}`;
+  }
+  refreshNextBreakStatus();
   document.getElementById("admin-panel").classList.add("open");
+}
+
+function refreshNextBreakStatus() {
+  const el = document.getElementById("s-nextbreak-status");
+  if (!el) return;
+  if (!S.nextAlarmAt) { el.textContent = "Currently set for —"; return; }
+  const t    = new Date(S.nextAlarmAt);
+  const h12  = t.getHours() % 12 || 12;
+  const ampm = t.getHours() >= 12 ? "PM" : "AM";
+  const mm   = String(t.getMinutes()).padStart(2, "0");
+  el.textContent = `Currently set for ${h12}:${mm} ${ampm}`;
+}
+
+// Sets an exact clock time for the next bathroom reminder. If that time
+// has already passed today (by more than a couple minutes), it's assumed
+// to mean tomorrow rather than firing immediately.
+function setNextBreakTime() {
+  const v = document.getElementById("s-nextbreak-time").value; // "HH:MM", 24h
+  if (!v) return;
+  const [hh, mm] = v.split(":").map(Number);
+  const target = new Date();
+  target.setHours(hh, mm, 0, 0);
+  if (target.getTime() < Date.now() - 2 * 60 * 1000) {
+    target.setDate(target.getDate() + 1);
+  }
+  S.nextAlarmAt = target.getTime();
+  saveState();
+  scheduleNextAlarm();
+  updateNextBar();
+  refreshNextBreakStatus();
 }
 
 function closeAdmin() {
