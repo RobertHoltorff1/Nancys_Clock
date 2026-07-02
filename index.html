@@ -527,7 +527,7 @@ html, body {
   <p class="hint">Same format. These rotate in order each time she snoozes.</p>
   <textarea id="s-celebs"></textarea>
 
-  <div class="sec">Dad's Google Calendar (iCal URL)</div>
+  <div class="sec">Mom's Dementia Calendar (on Rob's Google account)</div>
   <p class="hint">In Google Calendar → Settings → your calendar → "Secret address in iCal format"</p>
   <input type="text" id="s-calurl" placeholder="https://calendar.google.com/calendar/ical/...">
 
@@ -552,7 +552,7 @@ html, body {
   <div style="height:8px"></div>
   <button class="btn-save" onclick="saveAdmin()">Save & Close</button>
   <button class="btn-close" onclick="closeAdmin()">Cancel</button>
-  <p style="text-align:center;opacity:0.4;font-size:12px;margin-top:2px">Build 2026-07-02 22:54</p>
+  <p style="text-align:center;opacity:0.4;font-size:12px;margin-top:2px">Build 2026-07-02 23:13</p>
 </div>
 
 <script>
@@ -1264,6 +1264,8 @@ function playSlotSong() {
   try {
     if (!peeAudio) peeAudio = new Audio();   // reuse the SAME element (stays unlocked)
     ensureBoostChain();
+    // Last-resort re-wake in case iOS suspended the pipeline since the last tap
+    try { if (boostCtx && boostCtx.state === 'suspended') boostCtx.resume(); } catch(e){}
     peeAudio.pause();
     peeAudio.loop   = false;
     peeAudio.muted  = false;
@@ -1302,32 +1304,38 @@ function stopPeeSong() {
 /* ── iOS audio unlock ──
    iOS Safari blocks audio that starts on a timer unless it's been "unlocked"
    by a real finger tap. On the first tap anywhere, we silently play (muted)
-   the reusable audio element to bless it, so timer-fired alarms can play later. */
+   the reusable audio element to bless it, so timer-fired alarms can play later.
+   Separately — and on EVERY tap, not just the first — we re-check and re-wake
+   any audio contexts, since iOS can silently re-suspend them later (screen
+   lock, backgrounding, even a native picker UI popping up over the page). A
+   one-time-only wake left the boost chain permanently silent if it got
+   suspended again after that first tap. */
 let audioPrimed = false;
 // Minimal silent WAV (44 bytes, 0 samples) — safe to play for iOS audio unlock
 const SILENT_WAV = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
 function primeAudio() {
-  if (audioPrimed) return;
-  audioPrimed = true;
-  // Unlock the HTMLAudio pipeline using a truly silent clip (never the real pee song)
-  try {
-    if (!peeAudio) peeAudio = new Audio();
-    peeAudio.volume = 0;
-    peeAudio.src = SILENT_WAV;
-    const p = peeAudio.play();
-    if (p) p.then(() => {
-      peeAudio.pause();
-      peeAudio.currentTime = 0;
-      peeAudio.volume = FULL_VOLUME;
-      peeAudio.src = ''; // cleared; real src set when alarm fires
-    }).catch(() => { peeAudio.volume = FULL_VOLUME; });
-  } catch(e){}
-  // Also unlock the Web Audio context used by the chime fallback
+  if (!audioPrimed) {
+    audioPrimed = true;
+    // Unlock the HTMLAudio pipeline using a truly silent clip (never the real pee song)
+    try {
+      if (!peeAudio) peeAudio = new Audio();
+      peeAudio.volume = 0;
+      peeAudio.src = SILENT_WAV;
+      const p = peeAudio.play();
+      if (p) p.then(() => {
+        peeAudio.pause();
+        peeAudio.currentTime = 0;
+        peeAudio.volume = FULL_VOLUME;
+        peeAudio.src = ''; // cleared; real src set when alarm fires
+      }).catch(() => { peeAudio.volume = FULL_VOLUME; });
+    } catch(e){}
+  }
+  // Re-wake audio contexts on EVERY tap — cheap to call on an already-running
+  // context, and it's the only way to recover from iOS suspending them later.
   try {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === 'suspended') audioCtx.resume();
   } catch(e){}
-  // And the gain-boost chain for the bathroom songs
   ensureBoostChain();
   try { if (boostCtx && boostCtx.state === 'suspended') boostCtx.resume(); } catch(e){}
 }
@@ -1342,12 +1350,16 @@ function stopBeep() {
   clearInterval(alarmInterval);
   alarmInterval = null;
   stopPeeSong();
-  try { if (audioCtx) { audioCtx.close(); audioCtx = null; } } catch(e){}
+  // Note: audioCtx is intentionally NOT closed here anymore — keeping it
+  // alive means primeAudio() can re-resume the same context on a later tap
+  // instead of playChime() creating a brand new (possibly suspended) one
+  // every single time, which was leaving the fallback chime silent too.
 }
 
 function playChime() {
   try {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
     const notes = [
       {f:523.25, t:0,   d:0.5},
       {f:659.25, t:0.55,d:0.5},
