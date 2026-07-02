@@ -820,8 +820,6 @@ function parseIcal(text) {
     const sum = b.match(/^SUMMARY[^:]*:(.+)$/m);
     if (!sum) continue;
     const title = sum[1].trim();
-    // Filter out personal reminders not meant for Nancy
-    if (/\brob\b/i.test(title)) continue;
 
     const dtStartMatch = b.match(/^DTSTART([^:]*):(.+)$/m);
     const dtEndMatch   = b.match(/^DTEND([^:]*):(.+)$/m);
