@@ -351,15 +351,31 @@ html, body {
   border:none;
   border-radius:51px;
   color:#fff;
-  font-size:44px;
-  font-weight:500;
-  padding:31px 77px;
   cursor:pointer;
   letter-spacing:0.5px;
   transition:transform 0.1s, background 0.15s;
   min-width:357px;
+  padding:28px 77px 24px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
 }
 #stop-btn:active { transform:scale(0.96); background:#c45580; color:#fff; }
+
+.stop-btn-main {
+  font-size:44px;
+  font-weight:500;
+  line-height:1.15;
+}
+
+.stop-btn-elapsed {
+  font-size:30px;
+  font-weight:600;
+  color:rgba(255,255,255,0.78);
+  font-variant-numeric: tabular-nums;
+  letter-spacing:0.5px;
+}
 
 #snooze-badge {
   font-size:36px;
@@ -469,7 +485,7 @@ html, body {
   <div id="alarm-name">Nancy!</div>
   <div id="alarm-message">Time to take a bathroom break.</div>
   <div id="alarm-speaker"></div>
-  <button id="stop-btn" onclick="stopAlarm()">Tap when heading to bathroom</button>
+  <button id="stop-btn" onclick="stopAlarm()"><span class="stop-btn-main">Tap when heading to bathroom</span><span id="alarm-elapsed" class="stop-btn-elapsed">Ringing 0:00</span></button>
   <div id="snooze-badge"></div>
 </div>
 
@@ -1068,10 +1084,41 @@ function showAlarmMessage(sc) {
     sc > 0 ? `Reminder #${sc+1} — ${S.name}, please get up! 🙏` : "";
 }
 
+/* ── Count-up timer: how long this alarm cycle has been ringing.
+   Starts the moment triggerAlarm() fires, keeps counting straight through
+   every song/message change, resets only when the button is tapped. ── */
+let alarmStartTime  = null;
+let elapsedInterval = null;
+
+function startElapsedTimer() {
+  clearInterval(elapsedInterval);
+  alarmStartTime  = Date.now();
+  updateElapsedDisplay();
+  elapsedInterval = setInterval(updateElapsedDisplay, 1000);
+}
+
+function stopElapsedTimer() {
+  clearInterval(elapsedInterval);
+  elapsedInterval = null;
+  alarmStartTime  = null;
+  const el = document.getElementById("alarm-elapsed");
+  if (el) el.textContent = "Ringing 0:00";
+}
+
+function updateElapsedDisplay() {
+  const el = document.getElementById("alarm-elapsed");
+  if (!el || !alarmStartTime) return;
+  const totalSec = Math.floor((Date.now() - alarmStartTime) / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  el.textContent = `Ringing ${m}:${String(s).padStart(2,"0")}`;
+}
+
 function triggerAlarm(forcedSnooze) {
   alarmActive = true;
   clearTimeout(snoozeTimer);
   stopSongSlot();
+  startElapsedTimer();
 
   snoozeCount = (forcedSnooze !== undefined) ? forcedSnooze : snoozeCount;
   showAlarmMessage(snoozeCount);
@@ -1093,6 +1140,7 @@ function stopAlarm() {
   clearTimeout(snoozeTimer);
   clearTimeout(dismissTimer);
   stopSongSlot();
+  stopElapsedTimer();
   document.getElementById("alarm-overlay").classList.remove("flashing");
   stopAlarmVisuals();
   // Reset 2.5-hour countdown from right now
@@ -1148,7 +1196,38 @@ const peeQ  = { q: [], last: null };
 ═══════════════════════════════════════════════════════════════ */
 const SONG_SLOT_MS = 2.5 * 60 * 1000; // 2.5 minutes per song, total
 const QUIET_GAIN    = 0.5012;          // -6dB ≈ half amplitude
-const FULL_VOLUME   = 0.95;
+const FULL_VOLUME   = 1.0;             // element volume ceiling — 100% of the file's own peak
+
+/* ── Extra amplification beyond the source file's own peak ──
+   <audio>.volume tops out at 1.0 — that's the loudest the file itself
+   was recorded. To go louder than that we route the element through a
+   Web Audio GainNode, which can amplify past 1.0. This applies as a
+   constant multiplier on top of whatever FULL_VOLUME/QUIET_GAIN sets,
+   so the loud/quiet contrast between them is unchanged either way.
+   If the routing fails for any reason, playback just falls back to
+   plain full-volume — this never silences the alarm. */
+const BOOST_DB    = 3;                            // extra headroom beyond the file's own peak
+const BOOST_GAIN  = Math.pow(10, BOOST_DB / 20);  // ≈ 1.41x
+let boostCtx   = null;
+let boostNode  = null;
+let boostWired = false;
+
+function ensureBoostChain() {
+  if (boostWired || !peeAudio) return;
+  boostWired = true; // only ever attempt this once per page load
+  try {
+    boostCtx   = new (window.AudioContext || window.webkitAudioContext)();
+    const src  = boostCtx.createMediaElementSource(peeAudio);
+    boostNode  = boostCtx.createGain();
+    boostNode.gain.value = BOOST_GAIN;
+    src.connect(boostNode);
+    boostNode.connect(boostCtx.destination);
+  } catch(e) {
+    // Routing unavailable — peeAudio still plays normally via its own
+    // volume, just without the extra boost.
+    boostNode = null;
+  }
+}
 
 let songSlotTimer = null;
 
@@ -1177,6 +1256,7 @@ function playSlotSong() {
   if (!PEE_SONGS.length) return false;
   try {
     if (!peeAudio) peeAudio = new Audio();   // reuse the SAME element (stays unlocked)
+    ensureBoostChain();
     peeAudio.pause();
     peeAudio.loop   = false;
     peeAudio.muted  = false;
@@ -1231,15 +1311,18 @@ function primeAudio() {
     if (p) p.then(() => {
       peeAudio.pause();
       peeAudio.currentTime = 0;
-      peeAudio.volume = 0.95;
+      peeAudio.volume = FULL_VOLUME;
       peeAudio.src = ''; // cleared; real src set when alarm fires
-    }).catch(() => { peeAudio.volume = 0.95; });
+    }).catch(() => { peeAudio.volume = FULL_VOLUME; });
   } catch(e){}
   // Also unlock the Web Audio context used by the chime fallback
   try {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === 'suspended') audioCtx.resume();
   } catch(e){}
+  // And the gain-boost chain for the bathroom songs
+  ensureBoostChain();
+  try { if (boostCtx && boostCtx.state === 'suspended') boostCtx.resume(); } catch(e){}
 }
 
 function startChimeFallback() {
@@ -1394,6 +1477,7 @@ function showPillLock() {
   if (alarmActive) {
     alarmActive = false;
     stopSongSlot();
+    stopElapsedTimer();
     document.getElementById("alarm-overlay").classList.remove("flashing", "active");
   }
   clearTimeout(mainTimer);
