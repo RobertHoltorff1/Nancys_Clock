@@ -512,6 +512,11 @@ const PEE_SONGS = [
   "/pp3-in-the-mood-for-pee-2min30sec.mp3",
   "/pp4-alarm-clock-ringtone-pee-pee-1.mp3",
 ];
+// Known clip lengths in milliseconds, same order as PEE_SONGS above.
+// Used as a safety-net timer in case the browser doesn't fire the audio
+// "ended" event reliably (this happens on some iOS/PWA setups) — update
+// these numbers if you ever swap in different-length clips.
+const PEE_DURATIONS = [150000, 4000]; // 2:30, then 4 sec
 
 let S = {
   name: "Nancy",
@@ -1083,14 +1088,16 @@ function nextFromQueue(list, queueRef, lastKey) {
   return song;
 }
 
-let peeSeqIndex = 0;    // which clip in PEE_SONGS we're on — plays in fixed order, not shuffled
-let peeOnDone   = null; // fires after the LAST clip in the pair finishes
+let peeSeqIndex = 0;     // which clip in PEE_SONGS we're on — fixed order, not shuffled
+let peeOnDone   = null;  // fires after the LAST clip in the pair finishes
+let peeWatchdog = null;  // backup timer in case "ended" doesn't fire
+let peeAdvanced = false; // guards against double-advance if both triggers fire
 
 function startBeep(onDone) {
   stopBeep();
   peeOnDone = onDone || null;
   if (PEE_SONGS.length && playPeeSong()) {
-    // Clips are chained via onended below — no repeating chime needed.
+    // Clips are chained below — no repeating chime needed.
   } else {
     startChimeFallback();
   }
@@ -1105,13 +1112,29 @@ function playPeeSong() {
     peeAudio.volume = 0.95;
     peeAudio.src = PEE_SONGS[peeSeqIndex];
     peeAudio.currentTime = 0;
+    peeAdvanced = false;
     // If a clip is missing or blocked, skip to the next one instead of stalling.
-    peeAudio.onerror = () => advancePeeSong();
-    peeAudio.onended = () => advancePeeSong();
+    peeAudio.onerror = () => safeAdvancePeeSong();
+    peeAudio.onended = () => safeAdvancePeeSong();
     const p = peeAudio.play();
-    if (p && p.catch) p.catch(() => advancePeeSong());
+    if (p && p.catch) p.catch(() => safeAdvancePeeSong());
+
+    // Safety net: some iOS/PWA setups don't reliably fire "ended", so also
+    // schedule the advance off the clip's known real-world length. Whichever
+    // trigger fires first wins; safeAdvancePeeSong() ignores the other one.
+    clearTimeout(peeWatchdog);
+    const dur = PEE_DURATIONS[peeSeqIndex] || 60000;
+    peeWatchdog = setTimeout(() => safeAdvancePeeSong(), dur + 800);
+
     return true;
   } catch(e) { return false; }
+}
+
+function safeAdvancePeeSong() {
+  if (peeAdvanced) return; // already moved on via the other trigger
+  peeAdvanced = true;
+  clearTimeout(peeWatchdog);
+  advancePeeSong();
 }
 
 // Moves to the next clip; once the last one finishes, resets to the start
@@ -1129,6 +1152,8 @@ function advancePeeSong() {
 }
 
 function stopPeeSong() {
+  clearTimeout(peeWatchdog);
+  peeAdvanced = true;
   try {
     if (peeAudio) {
       peeAudio.onended = null;
