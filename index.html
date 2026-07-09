@@ -151,7 +151,7 @@ html, body {
 }
 
 #cal-header {
-  font-size: 52px;
+  font-size: 58px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 2px;
@@ -179,23 +179,23 @@ html, body {
 }
 
 .cal-event-time {
-  font-size: 50px;
+  font-size: 56px;
   font-weight: 800;
   color: #5fe8c6;
-  min-width: 176px;
+  min-width: 190px;
   line-height: 1.1;
   flex-shrink: 0;
 }
 
 .cal-event-text {
-  font-size: 54px;
+  font-size: 60px;
   font-weight: 700;
   color: #ffffff;
   line-height: 1.2;
 }
 
 #cal-empty {
-  font-size: 52px;
+  font-size: 58px;
   font-weight: 700;
   color: #ffffff;
   line-height: 1.4;
@@ -552,7 +552,7 @@ html, body {
   <div style="height:8px"></div>
   <button class="btn-save" onclick="saveAdmin()">Save & Close</button>
   <button class="btn-close" onclick="closeAdmin()">Cancel</button>
-  <p style="text-align:center;opacity:0.4;font-size:12px;margin-top:2px">Build 2026-07-02 23:13</p>
+  <p style="text-align:center;opacity:0.4;font-size:12px;margin-top:2px">Build 2026-07-08 (Glenn Miller + bell, back-to-back)</p>
 </div>
 
 <script>
@@ -588,8 +588,8 @@ const PILL_SONGS = [
 // ── Pee break alarm songs — rotate through these as you upload them ──
 // Filenames are CASE-SENSITIVE and must match GitHub exactly.
 const PEE_SONGS = [
-  "/pp1-get-up-and-go.mp3",            // Rutles
-  "/pp2-pee-machine-sex-machine.mp3",  // James Brown "P Machine" edit
+  "/pp3-in-the-mood-for-pee-2min30sec.mp3",
+  "/pp4-alarm-clock-ringtone-pee-pee-1.mp3",
 ];
 
 let S = {
@@ -829,6 +829,8 @@ function parseIcal(text) {
     const sum = b.match(/^SUMMARY[^:]*:(.+)$/m);
     if (!sum) continue;
     const title = sum[1].trim();
+    // Filter out personal reminders not meant for Nancy
+    if (/\brob\b/i.test(title)) continue;
 
     const dtStartMatch = b.match(/^DTSTART([^:]*):(.+)$/m);
     const dtEndMatch   = b.match(/^DTEND([^:]*):(.+)$/m);
@@ -914,10 +916,12 @@ function parseIcal(text) {
       continue;
     }
 
-    // Tomorrow preview — only show after noon today
+    // Tomorrow preview — events specifically for Nancy (title contains "Nancy")
+    // show all day the day before; everything else still waits until after noon.
     if (startsTomorrow) {
       const currentHour = now.getHours();
-      if (currentHour >= 12) {
+      const isNancyEvent = /\bnancy\b/i.test(title);
+      if (isNancyEvent || currentHour >= 12) {
         // Calculate countdown to event
         const eventDate = new Date(
           parseInt(startYMD.slice(0,4)),
@@ -982,7 +986,7 @@ function renderCalEvents(events) {
           <div class="cal-event-time">All day</div>
           <div class="cal-event-text" style="flex:1">
             ${smartPrefix(e.text)}
-            <div style="font-size:48px;color:#dcf1ff;font-weight:700;line-height:1.05;margin-top:2px">(${e.suffix})</div>
+            <div style="font-size:52px;color:#dcf1ff;font-weight:700;line-height:1.05;margin-top:2px">(${e.suffix})</div>
           </div>
         </div>`;
     }
@@ -991,7 +995,7 @@ function renderCalEvents(events) {
         <div class="cal-event">
           <div class="cal-event-text" style="flex:1">
             <span style="color:#7dd8f0">Tomorrow: </span>${smartPrefix(e.text)}
-            ${e.countdown ? `<span style="font-size:36px;color:#7dd8f0;font-weight:400"> · ${e.countdown}</span>` : ''}
+            ${e.countdown ? `<span style="font-size:40px;color:#7dd8f0;font-weight:400"> · ${e.countdown}</span>` : ''}
           </div>
         </div>`;
     }
@@ -1191,18 +1195,12 @@ function nextFromQueue(list, queueRef, lastKey) {
 const peeQ  = { q: [], last: null };
 
 /* ══ BATHROOM ALARM SONG ENGINE ═══════════════════════════════
-   Each song gets a fixed 2.5-minute slot, timed from the moment the
-   slot starts (not from when the clip finishes):
-     • plays once at full volume
-     • as soon as that finishes, it repeats itself in a quiet loop
-       (~ -6dB) for whatever's left of the 2.5-minute slot
-     • when the slot's 2.5 minutes are up, we move to the next song
-       and start the pattern over at full volume again
-   This repeats forever until "heading to the bathroom" is tapped —
-   there is never a silent gap in between.
+   Glenn Miller (pp3) plays start to finish, then the short alarm bell
+   (pp4) plays immediately after with no gap, then it loops back to
+   Glenn Miller — repeating forever, no silent gaps, until "heading to
+   the bathroom" is tapped. Each full lap through both clips advances
+   the on-screen message to the next family/celeb line.
 ═══════════════════════════════════════════════════════════════ */
-const SONG_SLOT_MS = 2.5 * 60 * 1000; // 2.5 minutes per song, total
-const QUIET_GAIN    = 0.5012;          // -6dB ≈ half amplitude
 const FULL_VOLUME   = 1.0;             // element volume ceiling — 100% of the file's own peak
 
 /* ── Extra amplification beyond the source file's own peak ──
@@ -1236,21 +1234,15 @@ function ensureBoostChain() {
   }
 }
 
-let songSlotTimer = null;
+let peeSeqIndex   = 0;     // which clip in PEE_SONGS we're on — fixed order, not shuffled
+let songSlotTimer = null; // unused now, kept only so any stray references don't error
 
 function startSongSlot() {
   clearTimeout(songSlotTimer);
+  peeSeqIndex = 0;
   if (!(PEE_SONGS.length && playSlotSong())) {
     startChimeFallback();
   }
-  songSlotTimer = setTimeout(advanceSongSlot, SONG_SLOT_MS);
-}
-
-function advanceSongSlot() {
-  if (!alarmActive) return;
-  snoozeCount++;
-  showAlarmMessage(snoozeCount);
-  startSongSlot(); // moves to the next song, resets to full volume
 }
 
 function stopSongSlot() {
@@ -1270,27 +1262,32 @@ function playSlotSong() {
     peeAudio.loop   = false;
     peeAudio.muted  = false;
     peeAudio.volume = FULL_VOLUME;
-    peeAudio.src    = nextFromQueue(PEE_SONGS, peeQ);
+    peeAudio.src    = PEE_SONGS[peeSeqIndex];
     peeAudio.currentTime = 0;
 
-    // Full-volume play finishes → drop to -6dB and loop natively for the
-    // rest of this song's slot.
+    // When this clip finishes, move to the next one. Once we've played
+    // every clip once, loop back to the start AND advance the on-screen
+    // message — no silent gap, no quiet-loop padding, ever.
     peeAudio.onended = () => {
       if (!alarmActive) return;
-      peeAudio.volume = FULL_VOLUME * QUIET_GAIN;
-      peeAudio.loop   = true;
-      peeAudio.currentTime = 0;
-      peeAudio.play().catch(() => {});
+      peeSeqIndex++;
+      if (peeSeqIndex >= PEE_SONGS.length) {
+        peeSeqIndex = 0;
+        snoozeCount++;
+        showAlarmMessage(snoozeCount);
+      }
+      playSlotSong();
     };
-    // If the file is missing or the browser blocks playback, fall back to the chime.
-    peeAudio.onerror = () => startChimeFallback();
+    // If a clip is missing or blocked, skip forward instead of stalling.
+    peeAudio.onerror = () => { if (alarmActive) peeAudio.onended(); };
     const p = peeAudio.play();
-    if (p && p.catch) p.catch(() => startChimeFallback());
+    if (p && p.catch) p.catch(() => { if (alarmActive) peeAudio.onended(); });
     return true;
   } catch(e) { return false; }
 }
 
 function stopPeeSong() {
+  peeSeqIndex = 0;
   try {
     if (peeAudio) {
       peeAudio.onended = null;
